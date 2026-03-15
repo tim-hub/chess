@@ -1,5 +1,4 @@
 import 'models.dart';
-import 'game_state.dart';
 
 class GamePositionResult {
   final String fen;
