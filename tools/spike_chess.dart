@@ -22,6 +22,9 @@ void main() {
     'rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPP1PPP/RNBQKBNR w KQkq f6 0 3',
   );
   final epMoves = epChess.moves({'square': 'e5', 'verbose': true}) as List;
+  if (epMoves.isEmpty) {
+    throw AssertionError('No en passant moves found');
+  }
   final hasEP = (epMoves).any((m) => (m as Map)['flags'].toString().contains('e'));
   print('En passant detected: $hasEP');
   assert(hasEP, 'chess package missed en passant!');
@@ -31,6 +34,9 @@ void main() {
     'r3k2r/pppppppp/8/8/8/8/PPPPPPPP/R3K2R w KQkq - 0 1',
   );
   final castleMoves = castleChess.moves({'square': 'e1', 'verbose': true}) as List;
+  if (castleMoves.isEmpty) {
+    throw AssertionError('No castling moves found');
+  }
   final hasCastle = (castleMoves).any((m) => (m as Map)['flags'].toString().contains('k'));
   print('Kingside castle detected: $hasCastle');
   assert(hasCastle, 'chess package missed castling!');
