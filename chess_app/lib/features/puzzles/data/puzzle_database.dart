@@ -7,6 +7,7 @@ import 'package:sqflite/sqflite.dart';
 
 /// Manages the puzzle SQLite database asset.
 /// Copies from Flutter assets to the documents directory on first run.
+/// Seeds sample puzzles if the asset DB has no schema (empty file).
 class PuzzleDatabase {
   static Database? _db;
 
@@ -24,16 +25,71 @@ class PuzzleDatabase {
       await _copyFromAssets(dbPath);
     }
 
-    return openDatabase(dbPath, readOnly: true).timeout(
+    final db = await openDatabase(dbPath).timeout(
       const Duration(seconds: 30),
       onTimeout: () => throw TimeoutException('Puzzle database open timed out'),
     );
+
+    await _ensureSchema(db);
+    return db;
   }
 
   static Future<void> _copyFromAssets(String destPath) async {
     final data = await rootBundle.load('assets/puzzles.db');
     final bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
     await File(destPath).writeAsBytes(bytes);
+  }
+
+  /// Creates schema and seeds sample puzzles if the DB has no tables.
+  /// This handles the case where the bundled assets/puzzles.db is an empty file.
+  static Future<void> _ensureSchema(Database db) async {
+    final tables = await db.rawQuery(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='puzzles'",
+    );
+    if (tables.isNotEmpty) return;
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS puzzles (
+        id TEXT PRIMARY KEY,
+        fen TEXT NOT NULL,
+        moves TEXT NOT NULL,
+        rating INTEGER NOT NULL,
+        themes TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE VIRTUAL TABLE IF NOT EXISTS puzzles_fts USING fts5(
+        id,
+        themes,
+        content=puzzles,
+        content_rowid=rowid
+      )
+    ''');
+
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_rating ON puzzles(rating)');
+
+    // Seed a few sample puzzles so the app is usable without a full puzzle CSV.
+    // Replace assets/puzzles.db using tools/build_puzzles_db.dart for full content.
+    await db.insert('puzzles', {
+      'id': 'sample_fool_mate',
+      // After 1.f3 e5, White plays the blunder g4, Black finds Qh4#
+      'fen': 'rnbqkbnr/pppp1ppp/8/4p3/8/5P2/PPPPP1PP/RNBQKBNR w KQkq e6 0 2',
+      'moves': 'g2g4 d8h4',
+      'rating': 600,
+      'themes': 'mateInOne short',
+    });
+
+    await db.insert('puzzles', {
+      'id': 'sample_scholar_mate',
+      // After 1.e4 e5 2.Bc4 Nc6 3.Qh5, Black plays Nf6?? allowing Qxf7#
+      'fen': 'r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3',
+      'moves': 'g8f6 h5f7',
+      'rating': 700,
+      'themes': 'mateInOne short',
+    });
+
+    await db.execute("INSERT INTO puzzles_fts(puzzles_fts) VALUES('rebuild')");
   }
 
   // For testing only
