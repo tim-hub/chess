@@ -137,4 +137,104 @@ void main() {
     verifyNever(() => engine.getBestMove(any(), any()));
     expect(container.read(gameNotifierProvider)!.status, GameStatus.checkmate);
   });
+
+  group('undoLastMove', () {
+    // Helper: set up a game with 2 moves already played (e2e4, e7e5)
+    Future<void> playTwoMoves() async {
+      when(() => repo.reset()).thenReturn(null);
+      when(() => repo.loadPosition(GameState.kStartFen)).thenReturn(
+        const GamePositionResult(fen: GameState.kStartFen, legalMoves: ['e2e4']),
+      );
+      when(() => repo.applyMove('e2e4')).thenReturn(
+        const GameMoveResult(
+          fen: 'fen_after_e4',
+          legalMoves: ['e7e5'],
+          status: GameStatus.playing,
+          sanMove: 'e4',
+        ),
+      );
+      when(() => engine.getBestMove(any(), any())).thenAnswer((_) async => 'e7e5');
+      when(() => repo.applyMove('e7e5')).thenReturn(
+        const GameMoveResult(
+          fen: 'fen_after_e5',
+          legalMoves: ['g1f3'],
+          status: GameStatus.playing,
+          sanMove: 'e5',
+        ),
+      );
+
+      container.read(gameNotifierProvider.notifier).startGame(
+        playerColor: Side.white,
+        difficulty: DifficultyLevel.easy,
+      );
+      await container.read(gameNotifierProvider.notifier).applyPlayerMove('e2e4');
+    }
+
+    test('does nothing when history has fewer than 2 moves', () async {
+      when(() => repo.reset()).thenReturn(null);
+      when(() => repo.loadPosition(any())).thenReturn(
+        const GamePositionResult(fen: GameState.kStartFen, legalMoves: []),
+      );
+      container.read(gameNotifierProvider.notifier).startGame(
+        playerColor: Side.white,
+        difficulty: DifficultyLevel.easy,
+      );
+
+      // Clear interactions recorded during startGame so verifyNever is clean
+      clearInteractions(repo);
+
+      container.read(gameNotifierProvider.notifier).undoLastMove();
+
+      verifyNever(() => repo.loadPosition(any()));
+      expect(container.read(gameNotifierProvider)!.history, isEmpty);
+    });
+
+    test('does nothing when fenHistory is empty (restored session)', () {
+      // Manually inject a restored state with empty fenHistory
+      final restoredState = const GameState(
+        fen: 'fen_after_e5',
+        history: [Move(uci: 'e2e4', san: 'e4'), Move(uci: 'e7e5', san: 'e5')],
+        legalMoves: [],
+        playerColor: Side.white,
+        difficulty: DifficultyLevel.easy,
+        status: GameStatus.playing,
+        fenHistory: [],
+      );
+      container.read(gameNotifierProvider.notifier).restoreState(restoredState);
+
+      container.read(gameNotifierProvider.notifier).undoLastMove();
+
+      verifyNever(() => repo.loadPosition(any()));
+      expect(container.read(gameNotifierProvider)!.history.length, 2);
+    });
+
+    test('restores board to pre-player-move FEN and pops 2 moves', () async {
+      await playTwoMoves();
+
+      when(() => repo.loadPosition(GameState.kStartFen)).thenReturn(
+        const GamePositionResult(fen: GameState.kStartFen, legalMoves: ['e2e4']),
+      );
+
+      container.read(gameNotifierProvider.notifier).undoLastMove();
+
+      final state = container.read(gameNotifierProvider)!;
+      expect(state.history, isEmpty);
+      expect(state.fen, GameState.kStartFen);
+      expect(state.fenHistory, [GameState.kStartFen]);
+      expect(state.isAiThinking, isFalse);
+      expect(state.status, GameStatus.playing);
+      verify(() => repo.loadPosition(GameState.kStartFen)).called(greaterThan(0));
+    });
+
+    test('canUndo is false after undo empties history', () async {
+      await playTwoMoves();
+      when(() => repo.loadPosition(GameState.kStartFen)).thenReturn(
+        const GamePositionResult(fen: GameState.kStartFen, legalMoves: ['e2e4']),
+      );
+
+      container.read(gameNotifierProvider.notifier).undoLastMove();
+
+      expect(container.read(gameNotifierProvider)!.canUndo, isFalse);
+    });
+  });
 }
