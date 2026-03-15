@@ -8,6 +8,7 @@ class GameState {
   final DifficultyLevel difficulty;
   final GameStatus status;
   final bool isAiThinking;
+  final List<String> fenHistory;
 
   static const kStartFen =
       'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
@@ -20,7 +21,10 @@ class GameState {
     required this.difficulty,
     required this.status,
     this.isAiThinking = false,
+    this.fenHistory = const [],
   });
+
+  bool get canUndo => history.length >= 2 && !isAiThinking && fenHistory.length >= 2;
 
   /// True when it is the human player's turn to move.
   bool get isPlayerTurn {
@@ -36,6 +40,7 @@ class GameState {
     DifficultyLevel? difficulty,
     GameStatus? status,
     bool? isAiThinking,
+    List<String>? fenHistory,
   }) =>
       GameState(
         fen: fen ?? this.fen,
@@ -45,5 +50,6 @@ class GameState {
         difficulty: difficulty ?? this.difficulty,
         status: status ?? this.status,
         isAiThinking: isAiThinking ?? this.isAiThinking,
+        fenHistory: fenHistory ?? this.fenHistory,
       );
 }
