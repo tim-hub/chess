@@ -8,7 +8,10 @@ final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>(
 );
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
-  SettingsNotifier() : super(const AppSettings());
+  SettingsNotifier([super.initial = const AppSettings()]);
+
+  /// Public accessor for the current settings value (used during app startup).
+  AppSettings get currentSettings => state;
 
   Future<void> load() async {
     final prefs = await SharedPreferences.getInstance();

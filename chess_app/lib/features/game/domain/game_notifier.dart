@@ -88,4 +88,9 @@ class GameNotifier extends StateNotifier<GameState?> {
   void clearGame() {
     state = null;
   }
+
+  /// Restore a previously saved game state (called from main.dart startup).
+  void restoreState(GameState gameState) {
+    state = gameState;
+  }
 }
