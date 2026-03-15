@@ -1,0 +1,7 @@
+- A chess game in iOS
+- Paid app with no in-app purchases and ads
+- No tracking, subscription or network connection required
+- It has local AI model for offline play
+- It support multiplayer on same device 
+- With a clean and intuitive user interface
+- It has challenges to solve similar to [`chess club`](https://play.google.com/store/apps/details?id=chess.club&hl=en-US) 
