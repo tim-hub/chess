@@ -7,7 +7,8 @@ import 'package:chess_app/features/game/domain/game_state.dart';
 import 'package:chess_app/features/game/domain/models.dart';
 import 'package:chess_app/features/settings/data/settings_repository.dart';
 import 'board/board_widget.dart';
-import 'move_history_panel.dart';
+import 'board/animated_piece.dart';
+import 'move_history_strip.dart';
 import 'game_over_sheet.dart';
 import 'promotion_modal.dart';
 
@@ -22,6 +23,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   String? _selectedSquare;
   List<String> _legalMovesFromSelected = [];
   bool _gameOverShown = false;
+
+  Move? _animatingMove;
+  String? _hidePieceOn;
+  int _lastHistoryLength = 0;
 
   /// Parse FEN position string into a map of square → piece char
   Map<String, String> _parseFen(String fen) {
@@ -71,7 +76,21 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       });
     } else {
       // Second tap: attempt move
-      final uciBase = '$_selectedSquare$square';
+
+      // Castling UX fix: if king selected and player taps own rook,
+      // redirect to the king's landing square UCI.
+      const castlingMap = {
+        'e1h1': 'e1g1', // white kingside
+        'e1a1': 'e1c1', // white queenside
+        'e8h8': 'e8g8', // black kingside
+        'e8a8': 'e8c8', // black queenside
+      };
+      var uciBase = '$_selectedSquare$square';
+      final castlingRedirect = castlingMap[uciBase];
+      if (castlingRedirect != null && gameState.legalMoves.contains(castlingRedirect)) {
+        uciBase = castlingRedirect;
+      }
+
       final isPromotion = gameState.legalMoves.any(
         (m) => m.length == 5 && m.startsWith(uciBase),
       );
@@ -136,6 +155,18 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
   }
 
+  static Offset _squareToOffset(String square, double squareSize, bool flipped) {
+    final file = square[0].codeUnitAt(0) - 'a'.codeUnitAt(0);
+    final rank = int.parse(square[1]) - 1;
+    final col = flipped ? 7 - file : file;
+    final row = flipped ? rank : 7 - rank;
+    return Offset(col * squareSize, row * squareSize);
+  }
+
+  String _pieceCharForMove(Move move, Map<String, String> position) {
+    return position[move.to] ?? '';
+  }
+
   @override
   Widget build(BuildContext context) {
     final gameState = ref.watch(gameNotifierProvider);
@@ -164,12 +195,34 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final position = _parseFen(gameState.fen);
     final flipped = gameState.playerColor == Side.black;
 
+    // Trigger piece slide animation when a new move is added
+    final currentHistory = gameState.history;
+    if (currentHistory.length > _lastHistoryLength && currentHistory.isNotEmpty) {
+      _lastHistoryLength = currentHistory.length;
+      final lastMove = currentHistory.last;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _animatingMove = lastMove;
+            _hidePieceOn = lastMove.to;
+          });
+        }
+      });
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.background,
         title: const Text('Chess'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.undo),
+            tooltip: 'Take back',
+            onPressed: gameState.canUndo
+                ? () => ref.read(gameNotifierProvider.notifier).undoLastMove()
+                : null,
+          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               if (value == 'resign') {
@@ -190,22 +243,46 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               valueColor: AlwaysStoppedAnimation(AppColors.accent),
             ),
           Expanded(
-            child: BoardWidget(
-              flipped: flipped,
-              pieceSet: settings.pieceSet,
-              boardTheme: settings.boardTheme,
-              position: position,
-              legalMoves: _legalMovesFromSelected,
-              selectedSquare: _selectedSquare,
-              lastMove:
-                  gameState.history.isNotEmpty ? gameState.history.last : null,
-              onSquareTap: (sq) => _onSquareTap(sq, gameState),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final boardSize = constraints.maxWidth;
+                final squareSize = boardSize / 8;
+
+                return Stack(
+                  children: [
+                    BoardWidget(
+                      flipped: flipped,
+                      pieceSet: settings.pieceSet,
+                      boardTheme: settings.boardTheme,
+                      position: position,
+                      legalMoves: _legalMovesFromSelected,
+                      selectedSquare: _selectedSquare,
+                      lastMove: gameState.history.isNotEmpty ? gameState.history.last : null,
+                      onSquareTap: (sq) => _onSquareTap(sq, gameState),
+                      hidePieceOnSquare: _hidePieceOn,
+                    ),
+                    if (_animatingMove != null)
+                      AnimatedPiece(
+                        pieceChar: _pieceCharForMove(_animatingMove!, position),
+                        pieceSet: settings.pieceSet,
+                        fromOffset: _squareToOffset(_animatingMove!.from, squareSize, flipped),
+                        toOffset: _squareToOffset(_animatingMove!.to, squareSize, flipped),
+                        squareSize: squareSize,
+                        onComplete: () {
+                          if (mounted) {
+                            setState(() {
+                              _animatingMove = null;
+                              _hidePieceOn = null;
+                            });
+                          }
+                        },
+                      ),
+                  ],
+                );
+              },
             ),
           ),
-          SizedBox(
-            height: 120,
-            child: MoveHistoryPanel(history: gameState.history),
-          ),
+          MoveHistoryStrip(history: gameState.history),
         ],
       ),
     );
