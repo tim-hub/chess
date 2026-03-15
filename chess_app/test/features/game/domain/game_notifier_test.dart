@@ -93,6 +93,25 @@ void main() {
     expect(state.history[0].san, 'e4');
     expect(state.history[1].san, 'e5');
     expect(state.isAiThinking, isFalse);
+
+    // fenHistory invariant: length == history.length + 1
+    expect(state.fenHistory.length, 3); // startFen + preFen_e4 + preFen_e5
+    expect(state.fenHistory[0], GameState.kStartFen);
+  });
+
+  test('startGame seeds fenHistory with starting FEN', () {
+    when(() => repo.reset()).thenReturn(null);
+    when(() => repo.loadPosition(any())).thenReturn(
+      const GamePositionResult(fen: GameState.kStartFen, legalMoves: ['e2e4']),
+    );
+
+    container.read(gameNotifierProvider.notifier).startGame(
+      playerColor: Side.white,
+      difficulty: DifficultyLevel.easy,
+    );
+
+    final state = container.read(gameNotifierProvider)!;
+    expect(state.fenHistory, [GameState.kStartFen]);
   });
 
   test('applyPlayerMove does not trigger AI if game is over', () async {

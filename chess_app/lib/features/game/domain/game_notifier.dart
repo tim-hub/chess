@@ -1,10 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chess_engine.dart';
 import 'game_repository.dart';
 import 'game_state.dart';
 import 'models.dart';
 
-// These providers are overridden in main.dart with real implementations.
 final gameRepositoryProvider = Provider<GameRepository>((ref) {
   throw UnimplementedError('gameRepositoryProvider not overridden');
 });
@@ -37,6 +37,7 @@ class GameNotifier extends StateNotifier<GameState?> {
       playerColor: playerColor,
       difficulty: difficulty,
       status: GameStatus.playing,
+      fenHistory: [result.fen], // seeds the fenHistory invariant
     );
   }
 
@@ -44,7 +45,7 @@ class GameNotifier extends StateNotifier<GameState?> {
     final current = state;
     if (current == null || !current.isPlayerTurn) return;
 
-    // Apply player's move
+    final preFen = current.fen;
     final playerResult = _repo.applyMove(uciMove);
     final playerMove = Move(uci: uciMove, san: playerResult.sanMove);
 
@@ -53,29 +54,59 @@ class GameNotifier extends StateNotifier<GameState?> {
       history: [...current.history, playerMove],
       legalMoves: playerResult.legalMoves,
       status: playerResult.status,
+      fenHistory: [...current.fenHistory, preFen],
       isAiThinking: playerResult.status == GameStatus.playing,
     );
 
-    if (playerResult.status != GameStatus.playing) return;
+    if (playerResult.status == GameStatus.playing) {
+      await _triggerAiMove(playerResult.fen, current.difficulty);
+    }
+  }
 
-    // Trigger AI move
+  Future<void> _triggerAiMove(String fen, DifficultyLevel difficulty) async {
+    state = state?.copyWith(isAiThinking: true);
     try {
-      final aiUci = await _engine.getBestMove(
-        playerResult.fen,
-        current.difficulty,
-      );
+      final aiUci = await _engine.getBestMove(fen, difficulty);
       final aiResult = _repo.applyMove(aiUci);
       final aiMove = Move(uci: aiUci, san: aiResult.sanMove);
-
       state = state?.copyWith(
         fen: aiResult.fen,
         history: [...(state!.history), aiMove],
         legalMoves: aiResult.legalMoves,
         status: aiResult.status,
+        fenHistory: [...(state!.fenHistory), fen],
         isAiThinking: false,
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('AI move failed: $e');
       state = state?.copyWith(isAiThinking: false);
+    }
+  }
+
+  void undoLastMove() {
+    final current = state;
+    if (current == null || current.isAiThinking) return;
+    if (current.history.length < 2) return;
+    if (current.fenHistory.length < 2) return;
+
+    final newHistory = current.history.sublist(0, current.history.length - 2);
+    final newFenHistory =
+        current.fenHistory.sublist(0, current.fenHistory.length - 2);
+    final targetFen = newFenHistory.last;
+
+    final result = _repo.loadPosition(targetFen);
+    state = current.copyWith(
+      fen: result.fen,
+      legalMoves: result.legalMoves,
+      history: newHistory,
+      fenHistory: newFenHistory,
+      status: GameStatus.playing,
+      isAiThinking: false,
+    );
+
+    // Player is Black and board is now at start → AI must move first
+    if (newHistory.isEmpty && current.playerColor == Side.black) {
+      _triggerAiMove(result.fen, current.difficulty);
     }
   }
 
