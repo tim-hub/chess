@@ -25,6 +25,7 @@ class BoardWidget extends StatelessWidget {
   final String? selectedSquare;
   final Move? lastMove;
   final void Function(String square) onSquareTap;
+  final String? hidePieceOnSquare;
 
   const BoardWidget({
     super.key,
@@ -36,6 +37,7 @@ class BoardWidget extends StatelessWidget {
     required this.selectedSquare,
     required this.lastMove,
     required this.onSquareTap,
+    this.hidePieceOnSquare,
   });
 
   @override
@@ -89,7 +91,9 @@ class BoardWidget extends StatelessWidget {
 
   Widget _buildPieces(double squareSize) {
     return Stack(
-      children: position.entries.map((entry) {
+      children: position.entries
+          .where((e) => e.key != hidePieceOnSquare)  // skip hidden square
+          .map((entry) {
         final square = entry.key;
         final pieceChar = entry.value;
         final offset = _squareToOffset(square, squareSize, flipped);
