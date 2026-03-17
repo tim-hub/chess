@@ -53,11 +53,14 @@ class StatsService extends StateNotifier<StatsState> {
   static String _winsKey(DifficultyLevel d) => 'stats.game.wins.${d.name}';
   static String _lossesKey(DifficultyLevel d) => 'stats.game.losses.${d.name}';
 
+  SharedPreferences? _prefs;
+
   StatsService() : super(StatsState.empty);
 
   Future<void> load() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      _prefs = prefs;
       final wins = <DifficultyLevel, int>{};
       final losses = <DifficultyLevel, int>{};
       for (final d in DifficultyLevel.values) {
@@ -104,7 +107,8 @@ class StatsService extends StateNotifier<StatsState> {
 
   void _persist() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = _prefs;
+      if (prefs == null) return; // not loaded yet, skip
       await prefs.setInt(_keySolved, state.puzzlesSolved);
       await prefs.setInt(_keyHints, state.totalHintsUsed);
       await prefs.setInt(_keyPerfect, state.perfectSolves);
