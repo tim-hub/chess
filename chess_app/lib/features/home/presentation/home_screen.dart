@@ -102,6 +102,21 @@ class HomeScreen extends ConsumerWidget {
                       : const Text('Puzzles', style: TextStyle(fontSize: 18)),
                 ),
               ),
+              const SizedBox(height: 12),
+
+              // My Stats
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: const BorderSide(color: AppColors.divider),
+                  ),
+                  icon: const Icon(Icons.bar_chart_rounded, size: 18),
+                  label: const Text('My Stats', style: TextStyle(fontSize: 16)),
+                  onPressed: () => context.push('/stats'),
+                ),
+              ),
 
               // Error display
               if (stockfishReady.hasError)
