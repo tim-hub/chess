@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:chess_app/features/home/presentation/home_screen.dart';
 import 'package:chess_app/features/game/presentation/difficulty_setup_screen.dart';
 import 'package:chess_app/features/game/presentation/game_screen.dart';
-import 'package:chess_app/features/puzzles/presentation/puzzle_list_screen.dart';
+import 'package:chess_app/features/puzzles/presentation/chapter_list_screen.dart';
 import 'package:chess_app/features/puzzles/presentation/puzzle_screen.dart';
 import 'package:chess_app/features/settings/presentation/settings_screen.dart';
 import 'package:chess_app/features/stats/presentation/stats_screen.dart';
@@ -24,7 +24,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/game/play',
         redirect: (context, state) {
-          // If no active game, redirect to setup
           final gameState = ref.read(gameNotifierProvider);
           if (gameState == null) return '/game/setup';
           return null;
@@ -33,13 +32,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/puzzles',
-        builder: (context, state) => const PuzzleListScreen(),
+        builder: (context, state) => const ChapterListScreen(),
       ),
       GoRoute(
-        path: '/puzzles/:id',
+        path: '/puzzles/play/:id',
         builder: (context, state) {
           final puzzleId = state.pathParameters['id']!;
-          return PuzzleScreen(puzzleId: puzzleId);
+          final extra = state.extra as Map<String, dynamic>?;
+          final chapterId = extra?['chapterId'] as String?;
+          return PuzzleScreen(puzzleId: puzzleId, chapterId: chapterId);
         },
       ),
       GoRoute(

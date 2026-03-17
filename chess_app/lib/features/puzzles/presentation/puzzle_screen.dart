@@ -12,8 +12,9 @@ import 'package:chess_app/features/audio/audio_service.dart';
 
 class PuzzleScreen extends ConsumerStatefulWidget {
   final String puzzleId;
+  final String? chapterId;
 
-  const PuzzleScreen({super.key, required this.puzzleId});
+  const PuzzleScreen({super.key, required this.puzzleId, this.chapterId});
 
   @override
   ConsumerState<PuzzleScreen> createState() => _PuzzleScreenState();

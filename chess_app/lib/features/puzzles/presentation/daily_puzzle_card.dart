@@ -22,7 +22,7 @@ class DailyPuzzleCard extends StatelessWidget {
     return Card(
       color: AppColors.accent,
       child: InkWell(
-        onTap: () => context.push('/puzzles/${puzzle!.id}'),
+        onTap: () => context.push('/puzzles/play/${puzzle!.id}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
