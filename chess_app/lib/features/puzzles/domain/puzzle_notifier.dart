@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chess_app/features/game/domain/game_repository.dart';
 import 'package:chess_app/features/game/domain/game_notifier.dart';
+import 'package:chess_app/features/stats/data/stats_service.dart';
 import 'puzzle_repository.dart';
 import 'puzzle_session.dart';
 
@@ -62,6 +63,11 @@ class PuzzleNotifier extends StateNotifier<PuzzleSession?> {
           !_isPlayerTurn(nextIndex);
 
       if (isComplete || nextIndex >= session.puzzle.moves.length) {
+        if (nextIndex >= session.puzzle.moves.length) {
+          _ref.read(statsProvider.notifier).recordPuzzleSolved(
+            hintsUsed: session.hintCount,
+          );
+        }
         state = session.copyWith(
           currentFen: playerResult.fen,
           nextMoveIndex: nextIndex,
@@ -116,7 +122,14 @@ class PuzzleNotifier extends StateNotifier<PuzzleSession?> {
   void resetPuzzle() {
     final session = state;
     if (session == null) return;
-    // Re-load from the beginning
     loadPuzzle(session.puzzle.id);
+  }
+
+  /// Load a random puzzle different from the current one.
+  Future<void> loadNextPuzzle() async {
+    final current = state;
+    final excludeId = current?.puzzle.id ?? '';
+    final next = await _repo.getNextPuzzle(excludeId);
+    if (next != null) await loadPuzzle(next.id);
   }
 }

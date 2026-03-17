@@ -5,12 +5,34 @@ import 'package:chess_app/features/puzzles/domain/puzzle.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_notifier.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_repository.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_session.dart';
+import 'package:chess_app/features/stats/data/stats_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockPuzzleRepository extends Mock implements PuzzleRepository {}
 class MockGameRepository extends Mock implements GameRepository {}
+
+class MockStatsService extends StateNotifier<StatsState> implements StatsService {
+  MockStatsService() : super(StatsState.empty);
+  int recordPuzzleSolvedCalls = 0;
+  int lastHintsUsed = -1;
+
+  @override
+  Future<void> load() async {}
+
+  @override
+  void recordPuzzleSolved({required int hintsUsed}) {
+    recordPuzzleSolvedCalls++;
+    lastHintsUsed = hintsUsed;
+  }
+
+  @override
+  void recordGameWin(DifficultyLevel difficulty) {}
+
+  @override
+  void recordGameLoss(DifficultyLevel difficulty) {}
+}
 
 // A test puzzle with moves: [setup, player1, engine1, player2]
 final testPuzzle = Puzzle(
@@ -153,5 +175,54 @@ void main() {
     container.read(puzzleNotifierProvider.notifier).submitMove('e7e5');
 
     expect(container.read(puzzleNotifierProvider)!.isComplete, isTrue);
+  });
+
+  group('stats recording', () {
+    late MockStatsService mockStats;
+
+    setUp(() {
+      mockStats = MockStatsService();
+      container.dispose();
+      container = ProviderContainer(
+        overrides: [
+          puzzleRepositoryProvider.overrideWithValue(puzzleRepo),
+          gameRepositoryProvider.overrideWithValue(gameRepo),
+          statsProvider.overrideWith((_) => mockStats),
+        ],
+      );
+    });
+
+    test('recordPuzzleSolved called once when puzzle completes', () async {
+      when(() => puzzleRepo.getPuzzleById('test01')).thenAnswer((_) async => testPuzzle);
+      when(() => gameRepo.loadPosition(any())).thenReturn(
+        const GamePositionResult(fen: 'start', legalMoves: []),
+      );
+      when(() => gameRepo.applyMove(any())).thenReturn(
+        const GameMoveResult(fen: 'next', legalMoves: [], status: GameStatus.playing, sanMove: 'x'),
+      );
+
+      await container.read(puzzleNotifierProvider.notifier).loadPuzzle('test01');
+      container.read(puzzleNotifierProvider.notifier).submitMove('e7e5');
+      container.read(puzzleNotifierProvider.notifier).submitMove('d7d5');
+
+      expect(mockStats.recordPuzzleSolvedCalls, 1);
+    });
+
+    test('recordPuzzleSolved passes correct hintCount', () async {
+      when(() => puzzleRepo.getPuzzleById('test01')).thenAnswer((_) async => testPuzzle);
+      when(() => gameRepo.loadPosition(any())).thenReturn(
+        const GamePositionResult(fen: 'start', legalMoves: []),
+      );
+      when(() => gameRepo.applyMove(any())).thenReturn(
+        const GameMoveResult(fen: 'next', legalMoves: [], status: GameStatus.playing, sanMove: 'x'),
+      );
+
+      await container.read(puzzleNotifierProvider.notifier).loadPuzzle('test01');
+      container.read(puzzleNotifierProvider.notifier).useHint();
+      container.read(puzzleNotifierProvider.notifier).submitMove('e7e5');
+      container.read(puzzleNotifierProvider.notifier).submitMove('d7d5');
+
+      expect(mockStats.lastHintsUsed, 1);
+    });
   });
 }
