@@ -150,19 +150,26 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 Update `settingsProvider` and the `main.dart` override lambda accordingly:
 
 ```dart
-// provider definition:
+// provider definition (unchanged):
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>(
   (ref) => SettingsNotifier(ref),
 );
-
-// main.dart override:
-settingsProvider.overrideWith((ref) => settingsNotifier),
-// Note: settingsNotifier was pre-constructed without ref; for the override,
-// construct it with a dummy ref or pass it as:
-settingsProvider.overrideWith((_) => settingsNotifier),
-// Since settingsNotifier is pre-loaded, the ref is only needed for the
-// toggle methods, which are always called after runApp.
 ```
+
+In `main.dart`, the existing pattern pre-loads a temporary `SettingsNotifier` to get the initial state, then creates the real one inside the override lambda where a valid `Ref` is available. Continue this pattern after adding `Ref`:
+
+```dart
+// main.dart — pre-load phase (temporary notifier, no Ref needed):
+final settingsLoader = SettingsNotifier._forLoading(); // private factory, no Ref
+await settingsLoader.load();
+
+// In ProviderScope overrides:
+settingsProvider.overrideWith(
+  (ref) => SettingsNotifier(ref, settingsLoader.currentSettings),
+),
+```
+
+`_forLoading()` is a private named constructor (or the same public constructor with an optional `Ref?` parameter that defaults to `null`). The pre-load phase only calls `load()` — it never calls `toggleSoundEffects()` or `toggleMusic()`, so no `Ref` is needed there. The override factory receives a real `Ref` from Riverpod and constructs the live instance with the pre-loaded state. `currentSettings` is a getter: `AppSettings get currentSettings => state;`.
 
 Replace `toggleSound()` with two new methods:
 
