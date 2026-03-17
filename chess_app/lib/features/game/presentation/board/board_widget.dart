@@ -26,6 +26,8 @@ class BoardWidget extends StatelessWidget {
   final Move? lastMove;
   final void Function(String square) onSquareTap;
   final String? hidePieceOnSquare;
+  final String? hintFromSquare;
+  final String? hintToSquare;
 
   const BoardWidget({
     super.key,
@@ -38,6 +40,8 @@ class BoardWidget extends StatelessWidget {
     required this.lastMove,
     required this.onSquareTap,
     this.hidePieceOnSquare,
+    this.hintFromSquare,
+    this.hintToSquare,
   });
 
   @override
@@ -56,6 +60,8 @@ class BoardWidget extends StatelessWidget {
                 selectedSquare: selectedSquare,
                 legalMoves: legalMoves,
                 lastMove: lastMove,
+                hintFromSquare: hintFromSquare,
+                hintToSquare: hintToSquare,
               ),
               _buildPieces(squareSize),
               CoordinateLabels(

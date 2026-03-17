@@ -8,6 +8,10 @@ class HighlightLayer extends StatelessWidget {
   final String? selectedSquare;
   final List<String> legalMoves; // UCI strings
   final Move? lastMove;
+  /// If set, renders the hint from-square with [AppColors.hintPiece] color.
+  final String? hintFromSquare;
+  /// If set, renders the hint to-square with [AppColors.hintDestination] color.
+  final String? hintToSquare;
 
   const HighlightLayer({
     super.key,
@@ -16,6 +20,8 @@ class HighlightLayer extends StatelessWidget {
     required this.selectedSquare,
     required this.legalMoves,
     required this.lastMove,
+    this.hintFromSquare,
+    this.hintToSquare,
   });
 
   @override
@@ -27,7 +33,12 @@ class HighlightLayer extends StatelessWidget {
           _highlight(lastMove!.from, AppColors.lastMoveHighlight),
           _highlight(lastMove!.to, AppColors.lastMoveHighlight),
         ],
-        // Selected square
+        // Hint highlights (drawn before selection so piece-selection takes priority)
+        if (hintFromSquare != null)
+          _highlight(hintFromSquare!, AppColors.hintPiece),
+        if (hintToSquare != null)
+          _highlight(hintToSquare!, AppColors.hintDestination),
+        // Selected square (drawn on top of hint highlights)
         if (selectedSquare != null)
           _highlight(selectedSquare!, AppColors.selectedSquare),
         // Legal move dots
@@ -43,7 +54,7 @@ class HighlightLayer extends StatelessWidget {
       top: offset.dy,
       width: squareSize,
       height: squareSize,
-      child: Container(color: color),
+      child: IgnorePointer(child: Container(color: color)),
     );
   }
 
@@ -55,10 +66,12 @@ class HighlightLayer extends StatelessWidget {
       top: offset.dy + (squareSize - dotSize) / 2,
       width: dotSize,
       height: dotSize,
-      child: const DecoratedBox(
-        decoration: BoxDecoration(
-          color: AppColors.legalMoveDot,
-          shape: BoxShape.circle,
+      child: const IgnorePointer(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.legalMoveDot,
+            shape: BoxShape.circle,
+          ),
         ),
       ),
     );
