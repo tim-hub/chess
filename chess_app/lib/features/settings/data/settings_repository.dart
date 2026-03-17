@@ -13,16 +13,21 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Public accessor for the current settings value (used during app startup).
   AppSettings get currentSettings => state;
 
+  SharedPreferences? _prefs;
+
   Future<void> load() async {
-    final prefs = await SharedPreferences.getInstance();
+    _prefs = await SharedPreferences.getInstance();
     state = AppSettings(
       boardTheme: BoardTheme.fromKey(
-        prefs.getString('settings.boardTheme') ?? 'greenClean',
+        _prefs!.getString('settings.boardTheme') ?? 'greenClean',
       ),
-      pieceSet: prefs.getString('settings.pieceSet') ?? 'cburnett',
-      sound: prefs.getBool('settings.sound') ?? true,
-      legalHints: prefs.getBool('settings.legalHints') ?? true,
-      coordinates: prefs.getBool('settings.coordinates') ?? true,
+      pieceSet: _prefs!.getString('settings.pieceSet') ?? 'cburnett',
+      soundEffects: _prefs!.getBool('settings.sound_effects')
+          ?? _prefs!.getBool('settings.sound') // legacy migration
+          ?? true,
+      music: _prefs!.getBool('settings.music') ?? true,
+      legalHints: _prefs!.getBool('settings.legalHints') ?? true,
+      coordinates: _prefs!.getBool('settings.coordinates') ?? true,
     );
   }
 
@@ -38,10 +43,20 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await prefs.setString('settings.pieceSet', pieceSet);
   }
 
-  Future<void> toggleSound() async {
-    state = state.copyWith(sound: !state.sound);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('settings.sound', state.sound);
+  /// Toggles sound effects on/off. Requires [load()] to have been called first.
+  void toggleSoundEffects() {
+    final next = !state.soundEffects;
+    state = state.copyWith(soundEffects: next);
+    _prefs!.setBool('settings.sound_effects', next); // fire-and-forget
+    // AudioService notification added in Task 4 (Ref injection)
+  }
+
+  /// Toggles background music on/off. Requires [load()] to have been called first.
+  void toggleMusic() {
+    final next = !state.music;
+    state = state.copyWith(music: next);
+    _prefs!.setBool('settings.music', next); // fire-and-forget
+    // AudioService notification added in Task 4 (Ref injection)
   }
 
   Future<void> toggleLegalHints() async {

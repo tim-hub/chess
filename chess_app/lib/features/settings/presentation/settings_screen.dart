@@ -81,13 +81,25 @@ class SettingsScreen extends ConsumerWidget {
 
           const Divider(),
 
-          // Toggles
+          // Audio Toggles
           SwitchListTile(
-            title: const Text('Sound'),
-            value: settings.sound,
-            onChanged: (_) => ref.read(settingsProvider.notifier).toggleSound(),
+            secondary: const Icon(Icons.volume_up_rounded),
+            title: const Text('Sound Effects'),
+            value: settings.soundEffects,
+            onChanged: (_) => ref.read(settingsProvider.notifier).toggleSoundEffects(),
             activeColor: AppColors.accent,
           ),
+          SwitchListTile(
+            secondary: const Icon(Icons.music_note_rounded),
+            title: const Text('Music'),
+            value: settings.music,
+            onChanged: (_) => ref.read(settingsProvider.notifier).toggleMusic(),
+            activeColor: AppColors.accent,
+          ),
+
+          const Divider(),
+
+          // Other Toggles
           SwitchListTile(
             title: const Text('Show legal move hints'),
             value: settings.legalHints,
@@ -100,6 +112,16 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: (_) => ref.read(settingsProvider.notifier).toggleCoordinates(),
             activeColor: AppColors.accent,
           ),
+
+          const Divider(),
+
+          // Credits
+          const ListTile(
+            leading: Icon(Icons.info_outline),
+            title: Text('Credits'),
+            subtitle: Text('Sounds: Lichess (MIT) · Music: Kevin MacLeod (CC BY 4.0)'),
+          ),
+
           if (showBackToHome) ...[
             const Divider(),
             ListTile(
