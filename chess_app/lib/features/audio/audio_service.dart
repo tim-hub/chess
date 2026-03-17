@@ -32,6 +32,8 @@ class AudioService {
 
     // Configure SFX player volume
     await _sfx.setVolume(1.0);
+    // Preload the first SFX source so playback is instant on first trigger
+    await _sfx.setSource(AssetSource('audio/move.mp3'));
   }
 
   void playMove() {

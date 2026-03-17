@@ -306,5 +306,18 @@ void main() {
         isEmpty,
       );
     });
+
+    test('init preloads sfx source', () async {
+      final musicPlayer = await _createPlayer(playerId: 'music4');
+      final sfxPlayer   = await _createPlayer(playerId: 'sfx4');
+      final service = AudioService.withPlayers(music: musicPlayer, sfx: sfxPlayer);
+      platform.methodLog.clear();
+
+      await service.init(musicEnabled: false, sfxEnabled: true);
+
+      // setSource (routed through setSourceUrl on the platform interface) is
+      // called on the sfx player to warm up the audio pipeline
+      expect(platform.methodsFor('sfx4'), contains('setSourceUrl'));
+    });
   });
 }
