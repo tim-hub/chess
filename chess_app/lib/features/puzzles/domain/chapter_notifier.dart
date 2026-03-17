@@ -5,6 +5,9 @@ import 'package:chess_app/features/puzzles/domain/puzzle_chapter_registry.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_notifier.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_repository.dart';
 
+/// Minimum star rating in a chapter required to unlock the next chapter.
+const int kMinStarsToUnlock = 1;
+
 final chapterProgressRepositoryProvider = Provider<ChapterProgressRepository>(
   (_) => ChapterProgressRepository(),
 );
@@ -42,7 +45,7 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
       _solvedIds[def.id] = solvedSet;
 
       final solvedCount = solvedSet.intersection(puzzleIds.toSet()).length;
-      final isUnlocked = i == 0 || prevStarCount >= 1;
+      final isUnlocked = i == 0 || prevStarCount >= kMinStarsToUnlock;
 
       final chapter = PuzzleChapter(
         id: def.id,
@@ -93,7 +96,7 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
       final ch = entry.value;
       final solvedSet = _solvedIds[ch.id] ?? {};
       final solvedCount = solvedSet.intersection(ch.puzzleIds.toSet()).length;
-      final isUnlocked = i == 0 || prevStarCount >= 1;
+      final isUnlocked = i == 0 || prevStarCount >= kMinStarsToUnlock;
       final updated = PuzzleChapter(
         id: ch.id,
         name: ch.name,

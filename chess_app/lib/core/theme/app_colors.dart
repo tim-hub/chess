@@ -29,6 +29,6 @@ abstract final class AppColors {
   static const Color errorRed = Color(0xFFE53935);
 
   // Hint
-  static const Color hintPiece = Color(0x99FFD700);
-  static const Color hintDestination = Color(0x99FFD700);
+  static const Color hintPiece = Color(0xAAFFD700);        // amber — marks the piece to move
+  static const Color hintDestination = Color(0xAA4CAF50);  // green — marks the destination square
 }
