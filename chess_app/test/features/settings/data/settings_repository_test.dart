@@ -41,6 +41,19 @@ void main() {
     expect(container.read(settingsProvider).music, isTrue);
   });
 
+  test('load prefers sound_effects over legacy sound key when both present', () async {
+    SharedPreferences.setMockInitialValues({
+      'settings.sound_effects': true,
+      'settings.sound': false, // legacy disagrees — new key must win
+    });
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await container.read(settingsProvider.notifier).load();
+
+    expect(container.read(settingsProvider).soundEffects, isTrue);
+  });
+
   test('load reads settings.sound_effects key when present', () async {
     SharedPreferences.setMockInitialValues({
       'settings.sound_effects': false,

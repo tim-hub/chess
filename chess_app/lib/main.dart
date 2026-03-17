@@ -23,7 +23,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize settings
-  // ignore: invalid_use_of_visible_for_testing_member
   final settingsLoader = SettingsNotifier.forLoading();
   await settingsLoader.load();
 

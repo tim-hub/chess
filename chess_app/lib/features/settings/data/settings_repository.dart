@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chess_app/core/theme/board_theme.dart';
@@ -13,9 +12,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Live constructor — receives a real [Ref] from Riverpod.
   SettingsNotifier(this._ref, [super.initial = const AppSettings()]);
 
-  /// Used in [main()] for pre-loading before [ProviderScope] exists.
-  /// Never calls toggle methods; does not need a live [Ref].
-  @visibleForTesting
+  /// Bootstrap-only constructor used by `main()` for pre-loading settings before
+  /// [ProviderScope] is created. Only [load()] may be called on this instance —
+  /// toggle methods assert [_ref] is non-null and will throw in debug mode.
   SettingsNotifier.forLoading() : _ref = null, super(const AppSettings());
 
   final Ref? _ref;
