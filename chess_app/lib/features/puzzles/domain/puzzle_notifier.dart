@@ -58,12 +58,15 @@ class PuzzleNotifier extends StateNotifier<PuzzleSession?> {
       final playerResult = _gameRepo.applyMove(uciMove);
       final nextIndex = session.nextMoveIndex + 1;
 
-      // Check if puzzle is complete (no more player moves)
+      // Check if puzzle is complete (no more player moves).
+      // True when all moves are exhausted, OR when next turn is engine's
+      // final move (meaning no more player moves will follow).
       final isComplete = nextIndex >= session.puzzle.moves.length ||
-          !_isPlayerTurn(nextIndex);
+          (!_isPlayerTurn(nextIndex) &&
+              nextIndex + 1 >= session.puzzle.moves.length);
 
       if (isComplete || nextIndex >= session.puzzle.moves.length) {
-        if (nextIndex >= session.puzzle.moves.length) {
+        if (isComplete) {
           _ref.read(statsProvider.notifier).recordPuzzleSolved(
             hintsUsed: session.hintCount,
           );
