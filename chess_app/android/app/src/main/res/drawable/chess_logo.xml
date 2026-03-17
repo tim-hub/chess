@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Chess grid icon matching the home screen logo -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+
+    <!-- Green rounded square background -->
+    <path
+        android:pathData="M20,0 L76,0 Q96,0 96,20 L96,76 Q96,96 76,96 L20,96 Q0,96 0,76 L0,20 Q0,0 20,0 Z"
+        android:fillColor="#769656"/>
+
+    <!-- 3x3 white grid (grid_on icon) — occupies ~55% of the square, centered -->
+    <!-- Grid area: x=21..75, y=21..75 (54px, ~56% of 96) -->
+    <!-- 4 horizontal lines at y=21,39,57,75; 4 vertical lines at x=21,39,57,75 -->
+    <path
+        android:pathData="M21,21 L75,21 M21,39 L75,39 M21,57 L75,57 M21,75 L75,75
+                          M21,21 L21,75 M39,21 L39,75 M57,21 L57,75 M75,21 L75,75"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:fillColor="#00000000"/>
+</vector>
