@@ -65,11 +65,16 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    // load() must be called first to populate _prefs
+    // load() must be called first to populate _prefs (or lazy init handles it)
     await container.read(settingsProvider.notifier).load();
 
     container.read(settingsProvider.notifier).toggleSoundEffects();
     expect(container.read(settingsProvider).soundEffects, isFalse);
+
+    // Wait for the fire-and-forget persist to complete
+    await Future<void>.delayed(Duration.zero);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('settings.sound_effects'), isFalse);
 
     container.read(settingsProvider.notifier).toggleSoundEffects();
     expect(container.read(settingsProvider).soundEffects, isTrue);
@@ -83,6 +88,10 @@ void main() {
 
     container.read(settingsProvider.notifier).toggleMusic();
     expect(container.read(settingsProvider).music, isFalse);
+
+    await Future<void>.delayed(Duration.zero);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('settings.music'), isFalse);
 
     container.read(settingsProvider.notifier).toggleMusic();
     expect(container.read(settingsProvider).music, isTrue);

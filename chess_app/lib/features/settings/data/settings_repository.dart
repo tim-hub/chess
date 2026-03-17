@@ -43,20 +43,25 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await prefs.setString('settings.pieceSet', pieceSet);
   }
 
-  /// Toggles sound effects on/off. Requires [load()] to have been called first.
+  /// Toggles sound effects on/off.
   void toggleSoundEffects() {
     final next = !state.soundEffects;
     state = state.copyWith(soundEffects: next);
-    _prefs!.setBool('settings.sound_effects', next); // fire-and-forget
+    _persistBool('settings.sound_effects', next); // fire-and-forget
     // AudioService notification added in Task 4 (Ref injection)
   }
 
-  /// Toggles background music on/off. Requires [load()] to have been called first.
+  /// Toggles background music on/off.
   void toggleMusic() {
     final next = !state.music;
     state = state.copyWith(music: next);
-    _prefs!.setBool('settings.music', next); // fire-and-forget
+    _persistBool('settings.music', next); // fire-and-forget
     // AudioService notification added in Task 4 (Ref injection)
+  }
+
+  Future<void> _persistBool(String key, bool value) async {
+    _prefs ??= await SharedPreferences.getInstance();
+    await _prefs!.setBool(key, value);
   }
 
   Future<void> toggleLegalHints() async {
