@@ -44,13 +44,78 @@ class StatsState {
 final statsProvider =
     StateNotifierProvider<StatsService, StatsState>((_) => StatsService());
 
-// ── Service (stub — full impl in Task 3) ─────────────────────────────────────
+// ── Service ───────────────────────────────────────────────────────────────────
 
 class StatsService extends StateNotifier<StatsState> {
+  static const _keySolved = 'stats.puzzles.solved';
+  static const _keyHints = 'stats.puzzles.hints_used';
+  static const _keyPerfect = 'stats.puzzles.perfect';
+  static String _winsKey(DifficultyLevel d) => 'stats.game.wins.${d.name}';
+  static String _lossesKey(DifficultyLevel d) => 'stats.game.losses.${d.name}';
+
   StatsService() : super(StatsState.empty);
 
-  Future<void> load() async {}
-  void recordPuzzleSolved({required int hintsUsed}) {}
-  void recordGameWin(DifficultyLevel difficulty) {}
-  void recordGameLoss(DifficultyLevel difficulty) {}
+  Future<void> load() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final wins = <DifficultyLevel, int>{};
+      final losses = <DifficultyLevel, int>{};
+      for (final d in DifficultyLevel.values) {
+        final w = prefs.getInt(_winsKey(d));
+        final l = prefs.getInt(_lossesKey(d));
+        if (w != null) wins[d] = w;
+        if (l != null) losses[d] = l;
+      }
+      state = StatsState(
+        puzzlesSolved: prefs.getInt(_keySolved) ?? 0,
+        totalHintsUsed: prefs.getInt(_keyHints) ?? 0,
+        perfectSolves: prefs.getInt(_keyPerfect) ?? 0,
+        wins: wins,
+        losses: losses,
+      );
+    } catch (e) {
+      debugPrint('StatsService.load failed: $e');
+      state = StatsState.empty;
+    }
+  }
+
+  void recordPuzzleSolved({required int hintsUsed}) {
+    state = state.copyWith(
+      puzzlesSolved: state.puzzlesSolved + 1,
+      totalHintsUsed: state.totalHintsUsed + hintsUsed,
+      perfectSolves: hintsUsed == 0 ? state.perfectSolves + 1 : state.perfectSolves,
+    );
+    _persist();
+  }
+
+  void recordGameWin(DifficultyLevel difficulty) {
+    final updated = Map<DifficultyLevel, int>.from(state.wins);
+    updated[difficulty] = (updated[difficulty] ?? 0) + 1;
+    state = state.copyWith(wins: updated);
+    _persist();
+  }
+
+  void recordGameLoss(DifficultyLevel difficulty) {
+    final updated = Map<DifficultyLevel, int>.from(state.losses);
+    updated[difficulty] = (updated[difficulty] ?? 0) + 1;
+    state = state.copyWith(losses: updated);
+    _persist();
+  }
+
+  void _persist() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_keySolved, state.puzzlesSolved);
+      await prefs.setInt(_keyHints, state.totalHintsUsed);
+      await prefs.setInt(_keyPerfect, state.perfectSolves);
+      for (final d in DifficultyLevel.values) {
+        final w = state.wins[d];
+        final l = state.losses[d];
+        if (w != null) await prefs.setInt(_winsKey(d), w);
+        if (l != null) await prefs.setInt(_lossesKey(d), l);
+      }
+    } catch (e) {
+      debugPrint('StatsService._persist failed: $e');
+    }
+  }
 }
