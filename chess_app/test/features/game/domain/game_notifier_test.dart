@@ -99,7 +99,7 @@ void main() {
     expect(state.fenHistory[0], GameState.kStartFen); // pre-player-move FEN stored by applyPlayerMove
   });
 
-  test('startGame seeds fenHistory with starting FEN', () {
+  test('startGame initializes fenHistory as empty', () {
     when(() => repo.reset()).thenReturn(null);
     when(() => repo.loadPosition(any())).thenReturn(
       const GamePositionResult(fen: GameState.kStartFen, legalMoves: ['e2e4']),
