@@ -1,33 +1,26 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:chess_app/core/theme/board_theme.dart';
 import 'package:chess_app/features/game/domain/models.dart';
 import 'square_widget.dart';
 import 'piece_widget.dart';
+import 'animated_piece.dart';
 import 'highlight_layer.dart';
 import 'coordinate_labels.dart';
 
-/// Renders an 8x8 chess board with pieces, highlights, and coordinate labels.
-///
-/// [flipped] — true when player is black (board shown from black's perspective)
-/// [pieceSet] — piece set name ('cburnett' or 'merida')
-/// [boardTheme] — square colors
-/// [position] — map of square name → piece char (e.g. {'e1': 'K', 'e8': 'k'})
-/// [legalMoves] — UCI strings for legal moves from selected square
-/// [selectedSquare] — currently selected square name (or null)
-/// [lastMove] — the last move played (or null)
-/// [onSquareTap] — called when user taps a square
-class BoardWidget extends StatelessWidget {
+class BoardWidget extends StatefulWidget {
   final bool flipped;
   final String pieceSet;
   final BoardTheme boardTheme;
-  final Map<String, String> position; // square → piece char (uppercase=white, lowercase=black)
-  final List<String> legalMoves; // UCI strings from selected square
+  final Map<String, String> position;
+  final List<String> legalMoves;
   final String? selectedSquare;
   final Move? lastMove;
   final void Function(String square) onSquareTap;
   final String? hidePieceOnSquare;
   final String? hintFromSquare;
   final String? hintToSquare;
+  final bool animateLastMove; // true only for bot moves; defaults false
 
   const BoardWidget({
     super.key,
@@ -42,7 +35,78 @@ class BoardWidget extends StatelessWidget {
     this.hidePieceOnSquare,
     this.hintFromSquare,
     this.hintToSquare,
+    this.animateLastMove = false,
   });
+
+  @override
+  State<BoardWidget> createState() => _BoardWidgetState();
+}
+
+class _BoardWidgetState extends State<BoardWidget> {
+  Map<String, String> _prevPosition = {};
+  Timer? _fadingTimer;
+  int _slideGeneration = 0;
+
+  ({String char, String from, String to})? _slidingPiece;
+  ({String char, String square})? _fadingCapture;
+
+  @override
+  void initState() {
+    super.initState();
+    _prevPosition = widget.position;
+  }
+
+  @override
+  void didUpdateWidget(BoardWidget old) {
+    super.didUpdateWidget(old);
+
+    final newLastMove = widget.lastMove;
+    if (newLastMove == null || newLastMove == old.lastMove) {
+      _prevPosition = widget.position;
+      return;
+    }
+
+    // 1. Detect capture — was the destination occupied before this move?
+    final capturedChar = _prevPosition[newLastMove.to];
+    if (capturedChar != null) {
+      _fadingTimer?.cancel();
+      setState(() {
+        _fadingCapture = (char: capturedChar, square: newLastMove.to);
+      });
+      _fadingTimer = Timer(const Duration(milliseconds: 180), () {
+        if (mounted) setState(() => _fadingCapture = null);
+      });
+    }
+
+    // 2. Slide — only for bot moves.
+    if (widget.animateLastMove) {
+      final movingChar = _prevPosition[newLastMove.from];
+      if (movingChar != null) {
+        _slideGeneration++;
+        setState(() {
+          _slidingPiece = (
+            char: movingChar,
+            from: newLastMove.from,
+            to: newLastMove.to,
+          );
+        });
+      }
+    }
+
+    // 3. Snapshot — must happen AFTER steps 1 & 2.
+    _prevPosition = widget.position;
+  }
+
+  void _onSlideComplete() {
+    if (!mounted) return;
+    setState(() => _slidingPiece = null);
+  }
+
+  @override
+  void dispose() {
+    _fadingTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,18 +120,55 @@ class BoardWidget extends StatelessWidget {
               _buildSquares(squareSize),
               HighlightLayer(
                 squareSize: squareSize,
-                flipped: flipped,
-                selectedSquare: selectedSquare,
-                legalMoves: legalMoves,
-                lastMove: lastMove,
-                hintFromSquare: hintFromSquare,
-                hintToSquare: hintToSquare,
+                flipped: widget.flipped,
+                selectedSquare: widget.selectedSquare,
+                legalMoves: widget.legalMoves,
+                lastMove: widget.lastMove,
+                hintFromSquare: widget.hintFromSquare,
+                hintToSquare: widget.hintToSquare,
               ),
               _buildPieces(squareSize),
+              if (_slidingPiece != null)
+                AnimatedPiece(
+                  key: ValueKey('slide_$_slideGeneration'),
+                  pieceChar: _slidingPiece!.char,
+                  pieceSet: widget.pieceSet,
+                  fromOffset: _squareToOffset(
+                      _slidingPiece!.from, squareSize, widget.flipped),
+                  toOffset: _squareToOffset(
+                      _slidingPiece!.to, squareSize, widget.flipped),
+                  squareSize: squareSize,
+                  onComplete: _onSlideComplete,
+                ),
+              if (_fadingCapture != null)
+                Positioned(
+                  left: _squareToOffset(
+                          _fadingCapture!.square, squareSize, widget.flipped)
+                      .dx,
+                  top: _squareToOffset(
+                          _fadingCapture!.square, squareSize, widget.flipped)
+                      .dy,
+                  width: squareSize,
+                  height: squareSize,
+                  child: IgnorePointer(
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 1.0, end: 0.0),
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
+                      builder: (context, opacity, child) =>
+                          Opacity(opacity: opacity, child: child),
+                      child: PieceWidget(
+                        pieceChar: _fadingCapture!.char,
+                        pieceSet: widget.pieceSet,
+                        size: squareSize,
+                      ),
+                    ),
+                  ),
+                ),
               CoordinateLabels(
                 squareSize: squareSize,
-                flipped: flipped,
-                boardTheme: boardTheme,
+                flipped: widget.flipped,
+                boardTheme: widget.boardTheme,
               ),
             ],
           );
@@ -84,12 +185,14 @@ class BoardWidget extends StatelessWidget {
       ),
       itemCount: 64,
       itemBuilder: (context, index) {
-        final square = _indexToSquare(index, flipped);
+        final square = _indexToSquare(index, widget.flipped);
         final isLight = _isLightSquare(square);
         return SquareWidget(
           square: square,
-          color: isLight ? boardTheme.lightSquare : boardTheme.darkSquare,
-          onTap: () => onSquareTap(square),
+          color: isLight
+              ? widget.boardTheme.lightSquare
+              : widget.boardTheme.darkSquare,
+          onTap: () => widget.onSquareTap(square),
         );
       },
     );
@@ -97,22 +200,26 @@ class BoardWidget extends StatelessWidget {
 
   Widget _buildPieces(double squareSize) {
     return Stack(
-      children: position.entries
-          .where((e) => e.key != hidePieceOnSquare)  // skip hidden square
+      children: widget.position.entries
+          .where((e) =>
+              e.key != widget.hidePieceOnSquare &&
+              e.key != _slidingPiece?.from &&
+              e.key != _slidingPiece?.to &&
+              e.key != _fadingCapture?.square)
           .map((entry) {
         final square = entry.key;
         final pieceChar = entry.value;
-        final offset = _squareToOffset(square, squareSize, flipped);
+        final offset = _squareToOffset(square, squareSize, widget.flipped);
         return Positioned(
           left: offset.dx,
           top: offset.dy,
           width: squareSize,
           height: squareSize,
           child: GestureDetector(
-            onTap: () => onSquareTap(square),
+            onTap: () => widget.onSquareTap(square),
             child: PieceWidget(
               pieceChar: pieceChar,
-              pieceSet: pieceSet,
+              pieceSet: widget.pieceSet,
               size: squareSize,
             ),
           ),
@@ -133,7 +240,8 @@ class BoardWidget extends StatelessWidget {
     return (file + rank) % 2 == 1;
   }
 
-  static Offset _squareToOffset(String square, double squareSize, bool flipped) {
+  static Offset _squareToOffset(
+      String square, double squareSize, bool flipped) {
     final file = square[0].codeUnitAt(0) - 'a'.codeUnitAt(0);
     final rank = int.parse(square[1]) - 1;
     final col = flipped ? 7 - file : file;
