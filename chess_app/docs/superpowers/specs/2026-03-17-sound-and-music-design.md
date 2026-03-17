@@ -47,7 +47,7 @@ assets:
 
 Add `audioplayers: ^6.1.0` (or latest stable) to `pubspec.yaml` dependencies.
 
-`audioplayers` supports iOS, Android, macOS, Web, Linux, Windows. No special platform entitlements are required for playback from bundled assets on macOS.
+`audioplayers` supports iOS, Android, macOS, Web, Linux, Windows. No additional entitlements beyond the default macOS sandbox are required for bundled-asset playback. Verify that `macos/Runner/DebugProfile.entitlements` and `Release.entitlements` have `com.apple.security.app-sandbox` set to `true` (this is the Flutter default and should already be present).
 
 ---
 
@@ -59,7 +59,7 @@ Add `audioplayers: ^6.1.0` (or latest stable) to `pubspec.yaml` dependencies.
 final audioServiceProvider = Provider<AudioService>((_) => AudioService());
 ```
 
-`AudioService` is a plain Dart class (not a StateNotifier). No reactive state is exposed — callers invoke methods directly.
+`AudioService` is a plain Dart class (not a StateNotifier). No reactive state is exposed — callers invoke methods directly. The provider is always overridden in `ProviderScope` (see §3 main.dart snippet).
 
 ### API
 
@@ -67,7 +67,7 @@ final audioServiceProvider = Provider<AudioService>((_) => AudioService());
 class AudioService {
   Future<void> init({required bool musicEnabled, required bool sfxEnabled});
 
-  // Sound effects — each checks _sfxEnabled internally
+  // Sound effects — each checks _sfxEnabled internally; no-ops when false
   void playMove();
   void playWrong();
   void playSuccess();
@@ -83,14 +83,17 @@ class AudioService {
 ### Implementation notes
 
 - Two `AudioPlayer` instances: `_music` (looping) and `_sfx` (one-shot).
-- `init()` sets `_music` to loop (`ReleaseMode.loop`), sets volume, starts playback if `musicEnabled`. Preloads sfx sources.
+- `init()` sets `_music` to loop (`ReleaseMode.loop`), sets volume (`0.4` for music, `1.0` for sfx), starts playback if `musicEnabled`. Preloads sfx sources via `AssetSource`.
 - `setMusicEnabled(true)` resumes/plays; `setMusicEnabled(false)` pauses.
-- `setSfxEnabled` sets an internal `_sfxEnabled` flag; `play*()` methods no-op when false.
+- `setSfxEnabled` sets an internal `_sfxEnabled` flag; `play*()` methods return early when false.
 - `dispose()` stops and releases both players.
 
 ### Initialization in `main.dart`
 
+**Prerequisite:** `AppSettings` model must be updated (§4) before this step compiles — `settingsNotifier.state.music` and `.soundEffects` do not exist until the model is changed.
+
 ```dart
+// After settingsNotifier is loaded:
 final audioService = AudioService();
 await audioService.init(
   musicEnabled: settingsNotifier.state.music,
@@ -105,42 +108,103 @@ audioServiceProvider.overrideWithValue(audioService),
 
 ## 4. Settings Changes
 
+### Implementation order
+
+1. Update `AppSettings` model first (required before `main.dart` compiles)
+2. Update `SettingsNotifier` constructor and methods
+3. Update `main.dart`
+4. Update settings screen UI
+
 ### `AppSettings` model (`lib/features/settings/domain/app_settings.dart`)
 
-Replace the existing `sound` field with two fields:
+Replace the existing `sound: bool` field with two fields:
 
 | Field | Type | Default | SharedPreferences key |
 |---|---|---|---|
 | `soundEffects` | `bool` | `true` | `settings.sound_effects` |
 | `music` | `bool` | `true` | `settings.music` |
 
-**Migration:** When loading, read `settings.sound_effects` first; if absent, fall back to the old `settings.sound` key so existing users keep their saved preference.
+Update `copyWith` to accept `bool? soundEffects` and `bool? music` (remove `bool? sound`).
 
-### `SettingsNotifier`
-
-Add two methods (replacing `toggleSound()`):
+**Migration in `load()`:** When reading `settings.sound_effects`, fall back to the old `settings.sound` key if absent:
 
 ```dart
-void toggleSoundEffects()  // flips soundEffects, persists, calls audioService.setSfxEnabled()
-void toggleMusic()         // flips music, persists, calls audioService.setMusicEnabled()
+final soundEffects = prefs.getBool('settings.sound_effects')
+    ?? prefs.getBool('settings.sound')   // legacy fallback
+    ?? true;
+final music = prefs.getBool('settings.music') ?? true;
 ```
 
-Both methods read `audioServiceProvider` via `_ref.read(audioServiceProvider)` to notify the service of the change.
+### `SettingsNotifier` (`lib/features/settings/data/settings_repository.dart`)
+
+`SettingsNotifier` currently takes no `Ref`. Add a `Ref` parameter so it can call `audioServiceProvider`:
+
+```dart
+class SettingsNotifier extends StateNotifier<AppSettings> {
+  SettingsNotifier(this._ref, [super.initial = const AppSettings()]);
+  final Ref _ref;
+  // ...
+}
+```
+
+Update `settingsProvider` and the `main.dart` override lambda accordingly:
+
+```dart
+// provider definition:
+final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>(
+  (ref) => SettingsNotifier(ref),
+);
+
+// main.dart override:
+settingsProvider.overrideWith((ref) => settingsNotifier),
+// Note: settingsNotifier was pre-constructed without ref; for the override,
+// construct it with a dummy ref or pass it as:
+settingsProvider.overrideWith((_) => settingsNotifier),
+// Since settingsNotifier is pre-loaded, the ref is only needed for the
+// toggle methods, which are always called after runApp.
+```
+
+Replace `toggleSound()` with two new methods:
+
+```dart
+void toggleSoundEffects() {
+  final next = !state.soundEffects;
+  state = state.copyWith(soundEffects: next);
+  _prefs.setBool('settings.sound_effects', next);
+  _ref.read(audioServiceProvider).setSfxEnabled(next);
+}
+
+void toggleMusic() {
+  final next = !state.music;
+  state = state.copyWith(music: next);
+  _prefs.setBool('settings.music', next);
+  _ref.read(audioServiceProvider).setMusicEnabled(next);
+}
+```
+
+(`_prefs` is a `SharedPreferences` instance held by the notifier, following the existing pattern.)
 
 ### Settings screen UI
 
-Replace the existing single "Sound" tile with two tiles, then add a static credits tile at the bottom:
+Replace the existing single "Sound" `SwitchListTile` with two tiles, then add a static credits tile at the bottom of the `ListView`:
 
 ```
-🔊 Sound Effects    [switch]
-🎵 Music            [switch]
+🔊 Sound Effects    [switch]   → calls settingsNotifier.toggleSoundEffects()
+🎵 Music            [switch]   → calls settingsNotifier.toggleMusic()
 
 ── (divider) ──
 ℹ️  Credits
     Sounds: Lichess (MIT) · Music: Kevin MacLeod (CC BY 4.0)
 ```
 
-The credits tile is a non-interactive `ListTile` with `leading: Icon(Icons.info_outline)`, `title: Text('Credits')`, `subtitle: Text('Sounds: Lichess (MIT) · Music: Kevin MacLeod (CC BY 4.0)')`.
+The credits tile is a non-interactive `ListTile`:
+```dart
+ListTile(
+  leading: const Icon(Icons.info_outline),
+  title: const Text('Credits'),
+  subtitle: const Text('Sounds: Lichess (MIT) · Music: Kevin MacLeod (CC BY 4.0)'),
+)
+```
 
 ---
 
@@ -148,26 +212,30 @@ The credits tile is a non-interactive `ListTile` with `leading: Icon(Icons.info_
 
 ### GameScreen (`lib/features/game/presentation/game_screen.dart`)
 
-Use `ref.listen(gameNotifierProvider, (prev, next) { ... })` to observe state transitions:
+Add `ref.listen(gameNotifierProvider, (prev, next) { ... })` inside `build()`. Guard every branch with `if (prev == null || next == null) return;`.
 
-| Transition | Sound |
+| Condition | Sound |
 |---|---|
-| Player submits move (any `applyPlayerMove` call) | `playMove()` |
-| `isAiThinking`: true → false, status still `playing` | `playMove()` |
-| Status → `checkmate`, player is winner | `playSuccess()` |
-| Status → `checkmate`, player is loser | `playWrong()` |
-| Status → `resigned` | `playWrong()` |
-| Status → `stalemate` | _(no sound — ambiguous)_ |
+| Player submits move — call `playMove()` directly after `applyPlayerMove` in `_onSquareTap` | `playMove()` |
+| `prev.isAiThinking == true && next.isAiThinking == false && next.status == GameStatus.playing` | `playMove()` |
+| `prev.status == GameStatus.playing && next.status == GameStatus.checkmate` and player won | `playSuccess()` |
+| `prev.status == GameStatus.playing && next.status == GameStatus.checkmate` and player lost | `playWrong()` |
+| `prev.status == GameStatus.playing && next.status == GameStatus.resigned` | `playWrong()` |
+| `prev.status == GameStatus.playing && next.status == GameStatus.stalemate` | _(no sound)_ |
+
+**Important:** The AI move sound must check `next.status == GameStatus.playing` to avoid double-firing when the AI delivers checkmate (in that case the checkmate branch fires instead). The `isAiThinking` transition and the checkmate/resign/stalemate transitions are mutually exclusive via these guards.
 
 ### PuzzleScreen (`lib/features/puzzles/presentation/puzzle_screen.dart`)
 
-| Event | Sound |
-|---|---|
-| Move submitted and accepted (not failed, not complete) | `playMove()` |
-| `session.isFailed` becomes true | `playWrong()` |
-| `_onPuzzleSolved()` called | `playSuccess()` |
+Add `ref.listen(puzzleNotifierProvider, (prev, next) { ... })` inside `build()`. Guard with `if (prev == null || next == null) return;`.
 
-The `isFailed` trigger uses `ref.listen(puzzleNotifierProvider, ...)` watching for `isFailed: true` transitions.
+| Condition | Sound |
+|---|---|
+| Move submitted and accepted: `next.isFailed == false && !next.isComplete && next.currentFen != prev.currentFen` | `playMove()` |
+| Wrong move: `prev.isFailed == false && next.isFailed == true` | `playWrong()` |
+| Puzzle solved: already handled in `_onPuzzleSolved()` callback | `playSuccess()` |
+
+The `_onPuzzleSolved()` call already exists in `PuzzleScreen` — add `audioService.playSuccess()` there directly rather than in the listener to avoid double-firing.
 
 ---
 
@@ -175,7 +243,7 @@ The `isFailed` trigger uses `ref.listen(puzzleNotifierProvider, ...)` watching f
 
 - Music starts at app launch (if `music == true`) and loops continuously on all screens.
 - No per-screen start/stop. Music state is entirely controlled by the Settings toggle and by `AudioService.init()`.
-- Volume: music at ~40% (`0.4`), sound effects at 100% (`1.0`).
+- Volume: music at 40% (`0.4`), sound effects at 100% (`1.0`).
 
 ---
 
@@ -191,14 +259,15 @@ assets/audio/
   music.mp3
 ```
 
-Existing files modified:
-- `pubspec.yaml` — add `audioplayers`, add `assets/audio/`
-- `lib/features/settings/domain/app_settings.dart` — replace `sound` with `soundEffects` + `music`
-- `lib/features/settings/data/settings_repository.dart` — new keys + migration
-- `lib/features/settings/presentation/settings_screen.dart` — new tiles + credits
-- `lib/main.dart` — AudioService init + provider override
-- `lib/features/game/presentation/game_screen.dart` — ref.listen for sounds
-- `lib/features/puzzles/presentation/puzzle_screen.dart` — ref.listen for sounds
+Existing files modified (in recommended implementation order):
+1. `pubspec.yaml` — add `audioplayers`, add `assets/audio/`
+2. `lib/features/settings/domain/app_settings.dart` — replace `sound` with `soundEffects` + `music`, update `copyWith`
+3. `lib/features/settings/data/settings_repository.dart` — add `Ref` param, migration in `load()`, new toggle methods
+4. `lib/features/audio/audio_service.dart` — new file
+5. `lib/main.dart` — AudioService init + provider override
+6. `lib/features/settings/presentation/settings_screen.dart` — new tiles + credits
+7. `lib/features/game/presentation/game_screen.dart` — ref.listen for sounds
+8. `lib/features/puzzles/presentation/puzzle_screen.dart` — ref.listen for sounds
 
 ---
 
