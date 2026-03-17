@@ -61,6 +61,8 @@ class GameNotifier extends StateNotifier<GameState?> {
     state = updatedState;
     _recordResultIfTerminal(current, updatedState);
 
+    // Only trigger AI when still playing — this guard also prevents double
+    // stats recording when the player's move delivers checkmate.
     if (playerResult.status == GameStatus.playing) {
       await _triggerAiMove(playerResult.fen, current.difficulty);
     }
