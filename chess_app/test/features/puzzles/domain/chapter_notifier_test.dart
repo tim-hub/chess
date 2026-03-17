@@ -36,7 +36,7 @@ void main() {
   });
 
   test('chapter 2 is locked when chapter 1 has 0 stars', () async {
-    when(() => puzzleRepo.getPuzzleIdsByThemeTags(['mateIn1'], limit: any(named: 'limit')))
+    when(() => puzzleRepo.getPuzzleIdsByThemeTags(['mateIn1', 'mateInOne'], limit: any(named: 'limit')))
         .thenAnswer((_) async => ['p1', 'p2', 'p3', 'p4', 'p5']);
     // 0 solved → 0 stars → chapter 2 locked
     final notifier = ChapterNotifier(puzzleRepo, progressRepo);
@@ -45,7 +45,7 @@ void main() {
   });
 
   test('chapter 2 unlocks when chapter 1 earns 1 star (50% solved)', () async {
-    when(() => puzzleRepo.getPuzzleIdsByThemeTags(['mateIn1'], limit: any(named: 'limit')))
+    when(() => puzzleRepo.getPuzzleIdsByThemeTags(['mateIn1', 'mateInOne'], limit: any(named: 'limit')))
         .thenAnswer((_) async => ['p1', 'p2', 'p3', 'p4']);
     // Pre-seed 2/4 solved = 50% = 1 star
     SharedPreferences.setMockInitialValues({
@@ -58,7 +58,7 @@ void main() {
   });
 
   test('markSolved updates solvedCount reactively', () async {
-    when(() => puzzleRepo.getPuzzleIdsByThemeTags(['mateIn1'], limit: any(named: 'limit')))
+    when(() => puzzleRepo.getPuzzleIdsByThemeTags(['mateIn1', 'mateInOne'], limit: any(named: 'limit')))
         .thenAnswer((_) async => ['p1', 'p2', 'p3', 'p4']);
     final notifier = ChapterNotifier(puzzleRepo, progressRepo);
     await notifier.load();

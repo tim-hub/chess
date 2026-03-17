@@ -31,6 +31,7 @@ class PuzzleDatabase {
     );
 
     await _ensureSchema(db);
+    await _applyMigrations(db);
     return db;
   }
 
@@ -77,7 +78,7 @@ class PuzzleDatabase {
       'fen': 'rnbqkbnr/pppp1ppp/8/4p3/8/5P2/PPPPP1PP/RNBQKBNR w KQkq e6 0 2',
       'moves': 'g2g4 d8h4',
       'rating': 600,
-      'themes': 'mateInOne short',
+      'themes': 'mateIn1 short',
     });
 
     await db.insert('puzzles', {
@@ -86,9 +87,66 @@ class PuzzleDatabase {
       'fen': 'r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3',
       'moves': 'g8f6 h5f7',
       'rating': 700,
-      'themes': 'mateInOne short',
+      'themes': 'mateIn1 short',
     });
 
+    await db.insert('puzzles', {
+      'id': 'sample_fork',
+      // White knight on c3 forks black king on e7 and rook on c7 with Nd5+
+      'fen': '8/2r1k3/8/8/8/2N5/8/4K3 w - - 0 1',
+      'moves': 'c3d5',
+      'rating': 800,
+      'themes': 'fork short',
+    });
+
+    await db.insert('puzzles', {
+      'id': 'sample_pin',
+      // White bishop on b5 pins black knight on d7 to black king on e8; Bxd7+
+      'fen': '4k3/3n4/8/1B6/8/8/8/4K3 w - - 0 1',
+      'moves': 'b5d7',
+      'rating': 850,
+      'themes': 'pin short',
+    });
+
+    await db.execute("INSERT INTO puzzles_fts(puzzles_fts) VALUES('rebuild')");
+  }
+
+  /// Idempotent migrations applied every open.
+  /// - Fixes legacy 'mateInOne' tag → 'mateIn1' in any existing rows.
+  /// - Inserts missing sample puzzles (fork, pin) if they don't yet exist.
+  static Future<void> _applyMigrations(Database db) async {
+    // Fix old Lichess tag in any seeded or imported rows.
+    await db.rawUpdate(
+      "UPDATE puzzles SET themes = REPLACE(themes, 'mateInOne', 'mateIn1') "
+      "WHERE themes LIKE '%mateInOne%'",
+    );
+
+    // Upsert additional sample puzzles (no-op if already present).
+    await db.insert(
+      'puzzles',
+      {
+        'id': 'sample_fork',
+        'fen': '8/2r1k3/8/8/8/2N5/8/4K3 w - - 0 1',
+        'moves': 'c3d5',
+        'rating': 800,
+        'themes': 'fork short',
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+
+    await db.insert(
+      'puzzles',
+      {
+        'id': 'sample_pin',
+        'fen': '4k3/3n4/8/1B6/8/8/8/4K3 w - - 0 1',
+        'moves': 'b5d7',
+        'rating': 850,
+        'themes': 'pin short',
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+
+    // Rebuild FTS index to reflect any changes.
     await db.execute("INSERT INTO puzzles_fts(puzzles_fts) VALUES('rebuild')");
   }
 

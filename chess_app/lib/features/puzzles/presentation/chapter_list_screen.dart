@@ -123,11 +123,11 @@ class _ChapterCard extends StatelessWidget {
     required this.onTap,
   });
 
-  Color get _borderColor {
-    if (!chapter.isUnlocked) return const Color(0xFF334155);
+  Color get _accentColor {
+    if (!chapter.isUnlocked) return AppColors.divider;
     if (chapter.starCount == 3) return AppColors.successGreen;
-    if (chapter.solvedCount > 0) return const Color(0xFF3B82F6);
-    return const Color(0xFF6366F1);
+    if (chapter.solvedCount > 0) return const Color(0xFF3B82F6); // blue
+    return AppColors.accent; // chess green for unlocked/not started
   }
 
   @override
@@ -135,14 +135,21 @@ class _ChapterCard extends StatelessWidget {
     final isLocked = !chapter.isUnlocked;
 
     return Opacity(
-      opacity: isLocked ? 0.55 : 1.0,
+      opacity: isLocked ? 0.5 : 1.0,
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF1E293B),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border(left: BorderSide(color: _borderColor, width: 4)),
+            border: Border(left: BorderSide(color: _accentColor, width: 4)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           padding: const EdgeInsets.all(14),
           child: Row(
@@ -151,11 +158,14 @@ class _ChapterCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: _accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
-                  child: Text(chapter.icon, style: const TextStyle(fontSize: 22)),
+                  child: Text(
+                    isLocked ? '🔒' : chapter.icon,
+                    style: const TextStyle(fontSize: 22),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -170,8 +180,8 @@ class _ChapterCard extends StatelessWidget {
                             chapter.name,
                             style: TextStyle(
                               color: isLocked
-                                  ? const Color(0xFF64748B)
-                                  : Colors.white,
+                                  ? AppColors.textSecondary
+                                  : AppColors.textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -186,16 +196,16 @@ class _ChapterCard extends StatelessWidget {
                         value: chapter.totalCount == 0
                             ? 0
                             : chapter.solvedCount / chapter.totalCount,
-                        backgroundColor: const Color(0xFF0F172A),
-                        color: _borderColor,
+                        backgroundColor: AppColors.divider,
+                        color: _accentColor,
                         borderRadius: BorderRadius.circular(4),
                         minHeight: 6,
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _subtitleText(),
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -204,8 +214,8 @@ class _ChapterCard extends StatelessWidget {
                         prevChapterName != null
                             ? 'Earn 1★ in $prevChapterName to unlock'
                             : 'Locked',
-                        style: const TextStyle(
-                          color: Color(0xFF475569),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -250,8 +260,8 @@ class _StarRow extends StatelessWidget {
           i < starCount ? Icons.star_rounded : Icons.star_outline_rounded,
           size: 16,
           color: i < starCount
-              ? const Color(0xFFFBBF24)
-              : const Color(0xFF334155),
+              ? const Color(0xFFFBBF24) // gold
+              : AppColors.divider,
         ),
       ),
     );

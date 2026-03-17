@@ -21,7 +21,8 @@ const List<ChapterDefinition> kChapterDefinitions = [
     id: 'checkmate_in_1',
     name: 'Checkmate in 1',
     icon: '♟',
-    themeTags: ['mateIn1'],
+    // mateInOne is the legacy Lichess tag (older CSV exports); mateIn1 is current.
+    themeTags: ['mateIn1', 'mateInOne'],
     statusVerb: 'Deliver checkmate',
   ),
   ChapterDefinition(
@@ -86,6 +87,7 @@ const List<ChapterDefinition> kChapterDefinitions = [
 /// A puzzle is assigned to the chapter whose tag appears first in this map.
 const Map<String, String> kTagToChapterId = {
   'mateIn1': 'checkmate_in_1',
+  'mateInOne': 'checkmate_in_1', // legacy Lichess tag alias
   'fork': 'forks',
   'pin': 'pins_and_skewers',
   'skewer': 'pins_and_skewers',
