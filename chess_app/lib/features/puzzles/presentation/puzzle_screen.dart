@@ -386,11 +386,9 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
               ),
             ),
 
-            // Board — fills screen width, pushed toward bottom controls
+            // Board — fills screen width, centred vertically in remaining space
             Expanded(
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: BoardWidget(
+              child: BoardWidget(
                   flipped: flipped,
                   pieceSet: settings.pieceSet,
                   boardTheme: settings.boardTheme,
@@ -403,7 +401,6 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
                   onSquareTap: _onSquareTap,
                 ),
               ),
-            ),
 
             // Bottom area: solved banner OR bottom controls
             if (_solvedShown)
@@ -411,6 +408,15 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
                 earned: _earnedAtSolve,
                 hintCount: _hintCountAtSolve,
                 onNext: _loadNext,
+                isLastInChapter: () {
+                  if (widget.chapterId == null) return false;
+                  final chapter = chapters
+                      .where((c) => c.id == widget.chapterId)
+                      .firstOrNull;
+                  return chapter != null &&
+                      chapter.totalCount > 0 &&
+                      chapter.solvedCount >= chapter.totalCount;
+                }(),
               )
             else
               _BottomControls(
@@ -531,11 +537,13 @@ class _SolvedBanner extends StatefulWidget {
   final int earned;
   final int hintCount;
   final VoidCallback onNext;
+  final bool isLastInChapter;
 
   const _SolvedBanner({
     required this.earned,
     required this.hintCount,
     required this.onNext,
+    this.isLastInChapter = false,
   });
 
   @override
@@ -554,9 +562,12 @@ class _SolvedBannerState extends State<_SolvedBanner> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) _advance();
-    });
+    // Auto-advance only when there is a next puzzle to go to.
+    if (!widget.isLastInChapter) {
+      Future.delayed(const Duration(milliseconds: 2500), () {
+        if (mounted) _advance();
+      });
+    }
   }
 
   @override
@@ -603,15 +614,16 @@ class _SolvedBannerState extends State<_SolvedBanner> {
               ],
             ),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF166534)),
-            onPressed: _advance,
-            child: const Text(
-              'Next →',
-              style: TextStyle(color: Color(0xFF4ADE80)),
+          if (!widget.isLastInChapter)
+            FilledButton(
+              style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF166534)),
+              onPressed: _advance,
+              child: const Text(
+                'Next →',
+                style: TextStyle(color: Color(0xFF4ADE80)),
+              ),
             ),
-          ),
         ],
       ),
     );

@@ -358,11 +358,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 pieceSet: settings.pieceSet,
               ),
 
-              // Board — fills screen width, positioned toward player panel
+              // Board — fills screen width, centred vertically in remaining space
               Expanded(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: BoardWidget(
+                child: BoardWidget(
                     flipped: flipped,
                     pieceSet: settings.pieceSet,
                     boardTheme: settings.boardTheme,
@@ -374,7 +372,6 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         : null,
                     onSquareTap: (sq) => _onSquareTap(sq, gameState),
                     hidePieceOnSquare: null,
-                  ),
                 ),
               ),
 

@@ -18,6 +18,24 @@
         "panel": "dedicated"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "Build Android Debug APK",
+      "type": "shell",
+      "command": "/opt/homebrew/bin/flutter",
+      "args": ["build", "apk", "--debug"],
+      "options": {
+        "cwd": "${workspaceFolder}/chess_app",
+        "env": {
+          "ANDROID_HOME": "${env:HOME}/Library/Android/sdk"
+        }
+      },
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
     }
   ]
 }

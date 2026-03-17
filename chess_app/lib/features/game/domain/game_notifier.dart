@@ -76,7 +76,13 @@ class GameNotifier extends StateNotifier<GameState?> {
   Future<void> _triggerAiMove(String fen, DifficultyLevel difficulty) async {
     state = state?.copyWith(isAiThinking: true);
     try {
+      final start = DateTime.now();
       final aiUci = await _engine.getBestMove(fen, difficulty);
+      // Ensure the bot appears to "think" for at least 700 ms.
+      final elapsed = DateTime.now().difference(start).inMilliseconds;
+      if (elapsed < 700) {
+        await Future.delayed(Duration(milliseconds: 700 - elapsed));
+      }
       final aiResult = _repo.applyMove(aiUci);
       final aiMove = Move(uci: aiUci, san: aiResult.sanMove);
       final prevState = state!;

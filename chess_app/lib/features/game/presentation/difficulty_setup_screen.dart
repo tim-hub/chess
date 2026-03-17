@@ -88,7 +88,7 @@ class _DifficultySetupScreenState
                 ),
               ],
             ),
-            const Spacer(),
+            const SizedBox(height: 48),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -106,7 +106,6 @@ class _DifficultySetupScreenState
                 child: const Text('Play', style: TextStyle(fontSize: 18)),
               ),
             ),
-            const SizedBox(height: 24),
           ],
         ),
       ),

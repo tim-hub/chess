@@ -59,14 +59,16 @@ class PuzzleDatabase {
       )
     ''');
 
-    await db.execute('''
-      CREATE VIRTUAL TABLE IF NOT EXISTS puzzles_fts USING fts5(
-        id,
-        themes,
-        content=puzzles,
-        content_rowid=rowid
-      )
-    ''');
+    try {
+      await db.execute('''
+        CREATE VIRTUAL TABLE IF NOT EXISTS puzzles_fts USING fts5(
+          id,
+          themes,
+          content=puzzles,
+          content_rowid=rowid
+        )
+      ''');
+    } catch (_) {}
 
     await db.execute('CREATE INDEX IF NOT EXISTS idx_rating ON puzzles(rating)');
 
@@ -108,7 +110,9 @@ class PuzzleDatabase {
       'themes': 'pin short',
     });
 
-    await db.execute("INSERT INTO puzzles_fts(puzzles_fts) VALUES('rebuild')");
+    try {
+      await db.execute("INSERT INTO puzzles_fts(puzzles_fts) VALUES('rebuild')");
+    } catch (_) {}
   }
 
   /// Idempotent migrations applied every open.
@@ -146,8 +150,11 @@ class PuzzleDatabase {
       conflictAlgorithm: ConflictAlgorithm.ignore,
     );
 
-    // Rebuild FTS index to reflect any changes.
-    await db.execute("INSERT INTO puzzles_fts(puzzles_fts) VALUES('rebuild')");
+    // Rebuild FTS index to reflect any changes (best-effort; FTS5 may be
+    // unavailable on some Android SQLite builds).
+    try {
+      await db.execute("INSERT INTO puzzles_fts(puzzles_fts) VALUES('rebuild')");
+    } catch (_) {}
   }
 
   // For testing only

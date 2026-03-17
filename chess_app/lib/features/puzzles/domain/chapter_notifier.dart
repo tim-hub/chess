@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chess_app/features/puzzles/data/chapter_progress_repository.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_chapter.dart';
@@ -34,18 +35,21 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
   Future<void> load() async {
     final chapters = <PuzzleChapter>[];
     int prevStarCount = 0;
+    final limit = kDebugMode ? 2 : 50;
 
     for (int i = 0; i < kChapterDefinitions.length; i++) {
       final def = kChapterDefinitions[i];
       final puzzleIds = await _puzzleRepo.getPuzzleIdsByThemeTags(
         def.themeTags,
-        limit: 50,
+        limit: limit,
       );
       final solvedSet = await _progressRepo.getSolvedIds(def.id);
       _solvedIds[def.id] = solvedSet;
 
       final solvedCount = solvedSet.intersection(puzzleIds.toSet()).length;
-      final isUnlocked = true; // all chapters accessible from the start
+      final isUnlocked = kDebugMode
+          ? true
+          : i == 0 || prevStarCount >= kMinStarsToUnlock;
 
       final chapter = PuzzleChapter(
         id: def.id,
@@ -99,7 +103,9 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
       final ch = entry.value;
       final solvedSet = _solvedIds[ch.id] ?? {};
       final solvedCount = solvedSet.intersection(ch.puzzleIds.toSet()).length;
-      final isUnlocked = true; // all chapters accessible from the start
+      final isUnlocked = kDebugMode
+          ? true
+          : i == 0 || prevStarCount >= kMinStarsToUnlock;
       final updated = PuzzleChapter(
         id: ch.id,
         name: ch.name,

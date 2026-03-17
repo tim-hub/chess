@@ -32,15 +32,15 @@ class StatsScreen extends ConsumerWidget {
             unselectedLabelColor: AppColors.textSecondary,
             indicatorColor: AppColors.accent,
             tabs: [
-              Tab(text: 'Puzzles'),
               Tab(text: 'Games'),
+              Tab(text: 'Puzzles'),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            _PuzzlesTab(stats: stats, credits: credits),
             _GamesTab(stats: stats),
+            _PuzzlesTab(stats: stats, credits: credits),
           ],
         ),
       ),
