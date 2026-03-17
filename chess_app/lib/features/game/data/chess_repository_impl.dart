@@ -54,8 +54,18 @@ class ChessRepositoryImpl implements GameRepository {
       final move = m as Map;
       final from = move['from'] as String;
       final to = move['to'] as String;
-      final promotion = move['promotion'] as String?;
-      return promotion != null ? '$from$to$promotion' : '$from$to';
+      final flags = move['flags'] as String? ?? '';
+
+      // make_pretty() omits a 'promotion' key — detect via flag 'p' and
+      // parse the promoted piece from the SAN suffix (e.g. "a8=Q" → 'q').
+      if (flags.contains('p')) {
+        final san = move['san'] as String? ?? '';
+        final eqIdx = san.indexOf('=');
+        if (eqIdx != -1 && eqIdx + 1 < san.length) {
+          return '$from$to${san[eqIdx + 1].toLowerCase()}';
+        }
+      }
+      return '$from$to';
     }).toList();
   }
 
