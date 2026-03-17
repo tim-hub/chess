@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:chess_app/core/theme/app_colors.dart';
 import 'package:chess_app/core/theme/app_text_styles.dart';
 import 'package:chess_app/core/theme/board_theme.dart';
 import 'package:chess_app/features/settings/data/settings_repository.dart';
+import 'package:chess_app/features/game/domain/game_notifier.dart';
+import 'package:chess_app/features/game/domain/models.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -12,6 +15,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
+    final gameState = ref.watch(gameNotifierProvider);
+    final showBackToHome = gameState != null && gameState.status == GameStatus.playing;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -95,6 +100,18 @@ class SettingsScreen extends ConsumerWidget {
             onChanged: (_) => ref.read(settingsProvider.notifier).toggleCoordinates(),
             activeColor: AppColors.accent,
           ),
+          if (showBackToHome) ...[
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: const Text('Back to Home'),
+              subtitle: const Text('Leaves the current game without recording a result'),
+              onTap: () {
+                ref.read(gameNotifierProvider.notifier).clearGame();
+                context.go('/');
+              },
+            ),
+          ],
         ],
       ),
     );
