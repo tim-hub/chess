@@ -32,11 +32,13 @@ class PuzzleSession {
 
   /// Square the hint is pointing from (e.g. 'e7'), or null if no hint active.
   String? get hintFromSquare =>
-      hintCount >= 1 && expectedMove != null ? expectedMove!.substring(0, 2) : null;
+      hintCount >= 1 && expectedMove != null && expectedMove!.length >= 4
+          ? expectedMove!.substring(0, 2) : null;
 
   /// Square the hint is pointing to (e.g. 'e5'), or null if full hint not yet revealed.
   String? get hintToSquare =>
-      hintCount >= 2 && expectedMove != null ? expectedMove!.substring(2, 4) : null;
+      hintCount >= 2 && expectedMove != null && expectedMove!.length >= 4
+          ? expectedMove!.substring(2, 4) : null;
 
   PuzzleSession copyWith({
     String? currentFen,

@@ -99,7 +99,7 @@ class PuzzleRepositoryImpl implements PuzzleRepository {
       limit,
     ];
     final rows = await db.rawQuery(
-      'SELECT DISTINCT id FROM puzzles WHERE $whereClauses ORDER BY rating LIMIT ?',
+      'SELECT DISTINCT id FROM puzzles WHERE $whereClauses ORDER BY rating, id LIMIT ?',
       args,
     );
     return rows.map((r) => r['id'] as String).toList();
