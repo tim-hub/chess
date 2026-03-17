@@ -6,6 +6,7 @@ import 'package:chess_app/features/game/domain/game_notifier.dart';
 import 'package:chess_app/features/game/domain/game_state.dart';
 import 'package:chess_app/features/game/domain/models.dart';
 import 'package:chess_app/features/settings/data/settings_repository.dart';
+import 'package:chess_app/features/audio/audio_service.dart';
 import 'board/board_widget.dart';
 import 'move_history_strip.dart';
 import 'captured_pieces_row.dart';
@@ -179,6 +180,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       });
 
       await ref.read(gameNotifierProvider.notifier).applyPlayerMove(uciMove);
+      ref.read(audioServiceProvider).playMove();
     }
   }
 
@@ -210,6 +212,39 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   Widget build(BuildContext context) {
     final gameState = ref.watch(gameNotifierProvider);
     final settings = ref.watch(settingsProvider);
+
+    ref.listen<GameState?>(gameNotifierProvider, (prev, next) {
+      if (prev == null || next == null) return;
+      final audio = ref.read(audioServiceProvider);
+
+      // AI move completed (only when game is still playing to avoid
+      // double-firing when AI delivers checkmate — checkmate branch fires instead)
+      if (prev.isAiThinking && !next.isAiThinking && next.status == GameStatus.playing) {
+        audio.playMove();
+        return;
+      }
+
+      // Game-over transitions
+      if (prev.status == GameStatus.playing && next.status == GameStatus.checkmate) {
+        // After checkmate, FEN active color is the LOSER (the side that can't move).
+        // So the winner is the opposite color.
+        final fenActive = next.fen.split(' ')[1];
+        final winnerColor = fenActive == 'w' ? Side.black : Side.white;
+        if (winnerColor == next.playerColor) {
+          audio.playSuccess();
+        } else {
+          audio.playWrong();
+        }
+        return;
+      }
+
+      if (prev.status == GameStatus.playing && next.status == GameStatus.resigned) {
+        audio.playWrong();
+        return;
+      }
+
+      // stalemate → no sound
+    });
 
     if (gameState == null) {
       return const Scaffold(
