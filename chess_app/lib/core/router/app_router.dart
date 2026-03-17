@@ -6,6 +6,7 @@ import 'package:chess_app/features/game/presentation/game_screen.dart';
 import 'package:chess_app/features/puzzles/presentation/puzzle_list_screen.dart';
 import 'package:chess_app/features/puzzles/presentation/puzzle_screen.dart';
 import 'package:chess_app/features/settings/presentation/settings_screen.dart';
+import 'package:chess_app/features/stats/presentation/stats_screen.dart';
 import 'package:chess_app/features/game/domain/game_notifier.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -44,6 +45,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/stats',
+        builder: (context, state) => const StatsScreen(),
       ),
     ],
   );
