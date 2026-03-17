@@ -152,6 +152,7 @@ class _BoardWidgetState extends State<BoardWidget> {
                   height: squareSize,
                   child: IgnorePointer(
                     child: TweenAnimationBuilder<double>(
+                      key: ValueKey(_fadingCapture),
                       tween: Tween(begin: 1.0, end: 0.0),
                       duration: const Duration(milliseconds: 180),
                       curve: Curves.easeOut,
