@@ -182,6 +182,30 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     }
   }
 
+  Future<void> _handleResign() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Resign game?'),
+        content: const Text('This will count as a loss.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Resign'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      ref.read(gameNotifierProvider.notifier).resign();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final gameState = ref.watch(gameNotifierProvider);
@@ -303,7 +327,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     ref.read(gameNotifierProvider.notifier).undoLastMove();
                   }
                 : null,
-            onResign: () => ref.read(gameNotifierProvider.notifier).resign(),
+            onResign: _handleResign,
           ),
 
           // Move history
