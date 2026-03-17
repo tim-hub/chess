@@ -28,7 +28,10 @@ class AudioService {
     _sfxEnabled = sfxEnabled;
     _musicEnabled = musicEnabled;
 
-    // Configure music player for looping
+    // Music player: request long-term audio focus so it owns the stream.
+    await _music.setAudioContext(AudioContext(
+      android: const AudioContextAndroid(audioFocus: AndroidAudioFocus.gain),
+    ));
     await _music.setReleaseMode(ReleaseMode.loop);
     await _music.setVolume(0.4);
     if (musicEnabled) {
@@ -36,7 +39,10 @@ class AudioService {
       _music.play(AssetSource('audio/music.mp3')).catchError((_) {});
     }
 
-    // Configure SFX player volume
+    // SFX player: request no audio focus so it never interrupts the music.
+    await _sfx.setAudioContext(AudioContext(
+      android: const AudioContextAndroid(audioFocus: AndroidAudioFocus.none),
+    ));
     await _sfx.setVolume(1.0);
     // Preload the first SFX source so playback is instant on first trigger
     await _sfx.setSource(AssetSource('audio/move.mp3'));

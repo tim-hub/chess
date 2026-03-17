@@ -1,2 +1,7 @@
 .worktrees/
 .superpowers/brainstorm/**/.DS_Store
+build/
+chess_app/.dart_tool/
+chess_app/.idea/
+chess_app/build/
+.DS_Store
