@@ -168,6 +168,16 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
 
     final chapterId = widget.chapterId;
     if (chapterId != null) {
+      // Check if every puzzle in the chapter has now been solved.
+      final chapters = ref.read(chapterNotifierProvider);
+      final chapter = chapters.where((c) => c.id == chapterId).firstOrNull;
+      if (chapter != null &&
+          chapter.totalCount > 0 &&
+          chapter.solvedCount >= chapter.totalCount) {
+        _showChapterCompleteDialog(chapter);
+        return;
+      }
+
       final notifier = ref.read(chapterNotifierProvider.notifier);
       final nextId = notifier.nextPuzzleId(chapterId);
       if (nextId != null) {
@@ -178,6 +188,61 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     } else {
       ref.read(puzzleNotifierProvider.notifier).loadNextPuzzle();
     }
+  }
+
+  void _showChapterCompleteDialog(PuzzleChapter chapter) {
+    final stars = chapter.starCount;
+    final starLabel = ['', '⭐', '⭐⭐', '⭐⭐⭐'][stars.clamp(0, 3)];
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          '🎉 Chapter Complete!',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              chapter.name,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 15,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              starLabel,
+              style: const TextStyle(fontSize: 36),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${chapter.solvedCount} / ${chapter.totalCount} puzzles solved',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.accent,
+              minimumSize: const Size(180, 44),
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              context.pop(); // back to chapter list
+            },
+            child: const Text('Back to Chapters'),
+          ),
+        ],
+      ),
+    );
   }
 
   String _buildTitle(PuzzleSession session, List<PuzzleChapter> chapters) {
