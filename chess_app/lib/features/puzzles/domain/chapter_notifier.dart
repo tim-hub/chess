@@ -45,7 +45,7 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
       _solvedIds[def.id] = solvedSet;
 
       final solvedCount = solvedSet.intersection(puzzleIds.toSet()).length;
-      final isUnlocked = i == 0 || prevStarCount >= kMinStarsToUnlock;
+      final isUnlocked = true; // all chapters accessible from the start
 
       final chapter = PuzzleChapter(
         id: def.id,
@@ -99,7 +99,7 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
       final ch = entry.value;
       final solvedSet = _solvedIds[ch.id] ?? {};
       final solvedCount = solvedSet.intersection(ch.puzzleIds.toSet()).length;
-      final isUnlocked = i == 0 || prevStarCount >= kMinStarsToUnlock;
+      final isUnlocked = true; // all chapters accessible from the start
       final updated = PuzzleChapter(
         id: ch.id,
         name: ch.name,

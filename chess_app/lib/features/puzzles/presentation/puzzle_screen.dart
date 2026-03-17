@@ -365,62 +365,68 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Status bar
-          SizedBox(
-            height: 52,
-            child: Center(
-              child: session.isFailed
-                  ? _StatusBar(
-                      text: '✗ Not the right move — try again',
-                      color: AppColors.errorRed,
-                    )
-                  : _StatusBar(
-                      text: 'Your turn · ${_statusVerb()}',
-                      color: AppColors.textSecondary,
-                      dot: true,
-                    ),
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            // Status bar
+            SizedBox(
+              height: 52,
+              child: Center(
+                child: session.isFailed
+                    ? _StatusBar(
+                        text: '✗ Not the right move — try again',
+                        color: AppColors.errorRed,
+                      )
+                    : _StatusBar(
+                        text: 'Your turn · ${_statusVerb()}',
+                        color: AppColors.textSecondary,
+                        dot: true,
+                      ),
+              ),
             ),
-          ),
 
-          // Board
-          Expanded(
-            child: BoardWidget(
-              flipped: flipped,
-              pieceSet: settings.pieceSet,
-              boardTheme: settings.boardTheme,
-              position: position,
-              legalMoves: _legalMovesFromSelected,
-              selectedSquare: _selectedSquare,
-              lastMove: null,
-              hintFromSquare: session.hintFromSquare,
-              hintToSquare: session.hintToSquare,
-              onSquareTap: _onSquareTap,
+            // Board — fills screen width, pushed toward bottom controls
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: BoardWidget(
+                  flipped: flipped,
+                  pieceSet: settings.pieceSet,
+                  boardTheme: settings.boardTheme,
+                  position: position,
+                  legalMoves: _legalMovesFromSelected,
+                  selectedSquare: _selectedSquare,
+                  lastMove: null,
+                  hintFromSquare: session.hintFromSquare,
+                  hintToSquare: session.hintToSquare,
+                  onSquareTap: _onSquareTap,
+                ),
+              ),
             ),
-          ),
 
-          // Bottom area: solved banner OR bottom controls
-          if (_solvedShown)
-            _SolvedBanner(
-              earned: _earnedAtSolve,
-              hintCount: _hintCountAtSolve,
-              onNext: _loadNext,
-            )
-          else
-            _BottomControls(
-              session: session,
-              onHint: _useHint,
-              onReset: () {
-                setState(() {
-                  _solvedShown = false;
-                  _selectedSquare = null;
-                  _legalMovesFromSelected = [];
-                });
-                ref.read(puzzleNotifierProvider.notifier).resetPuzzle();
-              },
-            ),
-        ],
+            // Bottom area: solved banner OR bottom controls
+            if (_solvedShown)
+              _SolvedBanner(
+                earned: _earnedAtSolve,
+                hintCount: _hintCountAtSolve,
+                onNext: _loadNext,
+              )
+            else
+              _BottomControls(
+                session: session,
+                onHint: _useHint,
+                onReset: () {
+                  setState(() {
+                    _solvedShown = false;
+                    _selectedSquare = null;
+                    _legalMovesFromSelected = [];
+                  });
+                  ref.read(puzzleNotifierProvider.notifier).resetPuzzle();
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

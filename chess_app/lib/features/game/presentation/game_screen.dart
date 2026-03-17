@@ -295,81 +295,114 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     final playerLastMove =
         _lastMoveFor(gameState.history, gameState.playerColor);
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Leave game?'),
+            content: const Text('Your current game will be lost.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Keep playing'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Leave'),
+              ),
+            ],
+          ),
+        );
+        if (confirmed == true && context.mounted) {
+          context.go('/');
+        }
+      },
+      child: Scaffold(
         backgroundColor: AppColors.background,
-        elevation: 0,
-        title: const Text('Chess'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () => context.push('/settings'),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          SizedBox(
-            height: 3,
-            child: gameState.isAiThinking
-                ? const LinearProgressIndicator(
-                    backgroundColor: AppColors.background,
-                    valueColor: AlwaysStoppedAnimation(AppColors.accent),
-                  )
-                : null,
-          ),
-
-          // Opponent panel (top)
-          _PlayerInfoPanel(
-            name: 'Computer',
-            isOpponent: true,
-            isActive: !gameState.isPlayerTurn && !gameState.isAiThinking,
-            capturedPieces: opponentCaptured,
-            lastMoveSan: opponentLastMove?.san,
-            pieceSet: settings.pieceSet,
-          ),
-
-          // Board
-          Expanded(
-            child: BoardWidget(
-              flipped: flipped,
-              pieceSet: settings.pieceSet,
-              boardTheme: settings.boardTheme,
-              position: position,
-              legalMoves: _legalMovesFromSelected,
-              selectedSquare: _selectedSquare,
-              lastMove: gameState.history.isNotEmpty
-                  ? gameState.history.last
-                  : null,
-              onSquareTap: (sq) => _onSquareTap(sq, gameState),
-              hidePieceOnSquare: null,
+        appBar: AppBar(
+          backgroundColor: AppColors.background,
+          elevation: 0,
+          title: const Text('Chess'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => context.push('/settings'),
             ),
-          ),
+          ],
+        ),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 3,
+                child: gameState.isAiThinking
+                    ? const LinearProgressIndicator(
+                        backgroundColor: AppColors.background,
+                        valueColor: AlwaysStoppedAnimation(AppColors.accent),
+                      )
+                    : null,
+              ),
 
-          // Player panel (bottom)
-          _PlayerInfoPanel(
-            name: 'You',
-            isOpponent: false,
-            isActive: gameState.isPlayerTurn,
-            capturedPieces: playerCaptured,
-            lastMoveSan: playerLastMove?.san,
-            pieceSet: settings.pieceSet,
-            onUndo: gameState.canUndo
-                ? () {
-                    setState(() {
-                      _selectedSquare = null;
-                      _legalMovesFromSelected = [];
-                    });
-                    ref.read(gameNotifierProvider.notifier).undoLastMove();
-                  }
-                : null,
-            onResign: _handleResign,
-          ),
+              // Opponent panel (top)
+              _PlayerInfoPanel(
+                name: 'Computer',
+                isOpponent: true,
+                isActive: !gameState.isPlayerTurn && !gameState.isAiThinking,
+                capturedPieces: opponentCaptured,
+                lastMoveSan: opponentLastMove?.san,
+                pieceSet: settings.pieceSet,
+              ),
 
-          // Move history
-          MoveHistoryStrip(history: gameState.history),
-        ],
+              // Board — fills screen width, positioned toward player panel
+              Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: BoardWidget(
+                    flipped: flipped,
+                    pieceSet: settings.pieceSet,
+                    boardTheme: settings.boardTheme,
+                    position: position,
+                    legalMoves: _legalMovesFromSelected,
+                    selectedSquare: _selectedSquare,
+                    lastMove: gameState.history.isNotEmpty
+                        ? gameState.history.last
+                        : null,
+                    onSquareTap: (sq) => _onSquareTap(sq, gameState),
+                    hidePieceOnSquare: null,
+                  ),
+                ),
+              ),
+
+              // Player panel (bottom)
+              _PlayerInfoPanel(
+                name: 'You',
+                isOpponent: false,
+                isActive: gameState.isPlayerTurn,
+                capturedPieces: playerCaptured,
+                lastMoveSan: playerLastMove?.san,
+                pieceSet: settings.pieceSet,
+                onUndo: gameState.canUndo
+                    ? () {
+                        setState(() {
+                          _selectedSquare = null;
+                          _legalMovesFromSelected = [];
+                        });
+                        ref.read(gameNotifierProvider.notifier).undoLastMove();
+                      }
+                    : null,
+                onResign: _handleResign,
+              ),
+
+              // Move history
+              MoveHistoryStrip(history: gameState.history),
+            ],
+          ),
+        ),
       ),
     );
   }
