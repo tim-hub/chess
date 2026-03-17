@@ -3,12 +3,11 @@ import 'package:chess_app/core/theme/app_colors.dart';
 import 'package:chess_app/core/theme/app_text_styles.dart';
 import 'package:chess_app/features/game/domain/models.dart';
 
-/// Shows the game result and provides navigation options.
-/// Call [showGameOverSheet] to display it.
 Future<void> showGameOverSheet(
   BuildContext context, {
   required GameStatus status,
   required Side playerColor,
+  required Side? winnerSide, // null for draws/stalemate
   required VoidCallback onPlayAgain,
   required VoidCallback onHome,
 }) {
@@ -19,6 +18,7 @@ Future<void> showGameOverSheet(
     builder: (_) => _GameOverSheet(
       status: status,
       playerColor: playerColor,
+      winnerSide: winnerSide,
       onPlayAgain: onPlayAgain,
       onHome: onHome,
     ),
@@ -28,30 +28,37 @@ Future<void> showGameOverSheet(
 class _GameOverSheet extends StatelessWidget {
   final GameStatus status;
   final Side playerColor;
+  final Side? winnerSide;
   final VoidCallback onPlayAgain;
   final VoidCallback onHome;
 
   const _GameOverSheet({
     required this.status,
     required this.playerColor,
+    required this.winnerSide,
     required this.onPlayAgain,
     required this.onHome,
   });
 
+  bool get _playerWon => winnerSide == playerColor;
+
   String get _title {
     return switch (status) {
-      GameStatus.checkmate => 'Checkmate',
+      GameStatus.checkmate => _playerWon ? 'You Win!' : 'Checkmate',
       GameStatus.stalemate => 'Stalemate',
       GameStatus.draw => 'Draw',
+      GameStatus.resigned => 'You Resigned',
       GameStatus.playing => '',
     };
   }
 
   String get _subtitle {
     return switch (status) {
-      GameStatus.checkmate => playerColor == Side.white ? 'Black wins' : 'White wins',
+      GameStatus.checkmate =>
+        _playerWon ? 'Congratulations!' : 'Opponent wins',
       GameStatus.stalemate => 'The game is drawn',
       GameStatus.draw => 'The game is drawn',
+      GameStatus.resigned => 'Opponent wins',
       GameStatus.playing => '',
     };
   }

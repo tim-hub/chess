@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run Chess App",
+      "type": "shell",
+      "command": "/opt/homebrew/bin/flutter",
+      "args": ["run", "-d", "macos"],
+      "options": {
+        "cwd": "${workspaceFolder}/chess_app"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

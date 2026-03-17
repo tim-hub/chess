@@ -1,0 +1,144 @@
+<h2>Stats Screen Layout</h2>
+<p class="subtitle">Which approach feels right for showing puzzle credits + AI win/loss records?</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#F5F5F0; padding:16px; font-family:sans-serif;">
+      <!-- Phone mockup A: Summary cards + per-level table -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <div style="flex:1;background:#769656;border-radius:8px;padding:10px;color:white;text-align:center;">
+          <div style="font-size:11px;opacity:0.85;">⭐ Credits</div>
+          <div style="font-size:22px;font-weight:700;">142</div>
+        </div>
+        <div style="flex:1;background:white;border-radius:8px;padding:10px;text-align:center;border:1px solid #E5E7EB;">
+          <div style="font-size:11px;color:#6B7280;">Puzzles Solved</div>
+          <div style="font-size:22px;font-weight:700;color:#1A1A1A;">28</div>
+        </div>
+        <div style="flex:1;background:white;border-radius:8px;padding:10px;text-align:center;border:1px solid #E5E7EB;">
+          <div style="font-size:11px;color:#6B7280;">Win Rate</div>
+          <div style="font-size:22px;font-weight:700;color:#1A1A1A;">64%</div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:8px;border:1px solid #E5E7EB;overflow:hidden;">
+        <div style="padding:8px 10px;background:#F9F9F7;font-size:10px;font-weight:600;color:#6B7280;border-bottom:1px solid #E5E7EB;">AI GAMES BY DIFFICULTY</div>
+        <div style="padding:0 10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F0F0EE;font-size:11px;">
+            <span style="font-weight:500;">Beginner</span>
+            <span style="color:#6B7280;">5W / 1L</span>
+            <span style="color:#769656;font-weight:600;">83%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F0F0EE;font-size:11px;">
+            <span style="font-weight:500;">Easy</span>
+            <span style="color:#6B7280;">4W / 2L</span>
+            <span style="color:#769656;font-weight:600;">67%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F0F0EE;font-size:11px;">
+            <span style="font-weight:500;">Medium</span>
+            <span style="color:#6B7280;">2W / 3L</span>
+            <span style="color:#F59E0B;font-weight:600;">40%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:11px;">
+            <span style="font-weight:500;">Hard</span>
+            <span style="color:#6B7280;">0W / 2L</span>
+            <span style="color:#E53935;font-weight:600;">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Summary + Table</h3>
+      <p>3 headline stats at top (credits, puzzles, overall win rate), then a clean per-difficulty breakdown table below. Compact, scannable.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#F5F5F0;padding:16px;font-family:sans-serif;">
+      <!-- Phone mockup B: Two sections with visual bars -->
+      <div style="background:#769656;border-radius:8px;padding:12px;color:white;margin-bottom:10px;display:flex;align-items:center;gap:12px;">
+        <div style="font-size:28px;font-weight:700;">142</div>
+        <div>
+          <div style="font-size:12px;font-weight:600;">⭐ Puzzle Credits</div>
+          <div style="font-size:10px;opacity:0.8;">28 puzzles solved</div>
+        </div>
+      </div>
+      <div style="background:white;border-radius:8px;padding:10px;border:1px solid #E5E7EB;">
+        <div style="font-size:10px;font-weight:600;color:#6B7280;margin-bottom:8px;">AI WIN RATE</div>
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+            <span>Beginner</span><span style="color:#769656;font-weight:600;">83%</span>
+          </div>
+          <div style="height:6px;background:#F0F0EE;border-radius:3px;">
+            <div style="width:83%;height:100%;background:#769656;border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+            <span>Easy</span><span style="color:#769656;font-weight:600;">67%</span>
+          </div>
+          <div style="height:6px;background:#F0F0EE;border-radius:3px;">
+            <div style="width:67%;height:100%;background:#769656;border-radius:3px;"></div>
+          </div>
+        </div>
+        <div style="margin-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+            <span>Medium</span><span style="color:#F59E0B;font-weight:600;">40%</span>
+          </div>
+          <div style="height:6px;background:#F0F0EE;border-radius:3px;">
+            <div style="width:40%;height:100%;background:#F59E0B;border-radius:3px;"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+            <span>Hard</span><span style="color:#E53935;font-weight:600;">0%</span>
+          </div>
+          <div style="height:6px;background:#F0F0EE;border-radius:3px;">
+            <div style="width:0%;height:100%;background:#E53935;border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Hero Credit + Progress Bars</h3>
+      <p>Credits as a prominent hero block. Win rates as visual progress bars per difficulty. More visual, shows progression at a glance.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#F5F5F0;padding:16px;font-family:sans-serif;">
+      <!-- Phone mockup C: Two tabs -->
+      <div style="display:flex;gap:0;margin-bottom:10px;border-radius:8px;overflow:hidden;border:1px solid #E5E7EB;">
+        <div style="flex:1;padding:8px;background:#769656;color:white;text-align:center;font-size:11px;font-weight:600;">⭐ Puzzles</div>
+        <div style="flex:1;padding:8px;background:white;color:#6B7280;text-align:center;font-size:11px;font-weight:500;">♟ Games</div>
+      </div>
+      <div style="background:white;border-radius:8px;padding:12px;border:1px solid #E5E7EB;">
+        <div style="text-align:center;margin-bottom:12px;">
+          <div style="font-size:36px;font-weight:700;color:#769656;">142</div>
+          <div style="font-size:12px;color:#6B7280;">credits earned</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;background:#F5F5F0;border-radius:6px;padding:8px;text-align:center;">
+            <div style="font-size:16px;font-weight:700;">28</div>
+            <div style="font-size:10px;color:#6B7280;">Solved</div>
+          </div>
+          <div style="flex:1;background:#F5F5F0;border-radius:6px;padding:8px;text-align:center;">
+            <div style="font-size:16px;font-weight:700;">3</div>
+            <div style="font-size:10px;color:#6B7280;">w/ Hints</div>
+          </div>
+          <div style="flex:1;background:#F5F5F0;border-radius:6px;padding:8px;text-align:center;">
+            <div style="font-size:16px;font-weight:700;">5</div>
+            <div style="font-size:10px;color:#6B7280;">Perfect</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Tabbed (Puzzles / Games)</h3>
+      <p>Separate tabs for puzzle stats and AI game stats. Cleaner separation, more room for each section. Slightly more taps to see everything.</p>
+    </div>
+  </div>
+
+</div>

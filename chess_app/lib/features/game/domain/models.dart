@@ -39,7 +39,7 @@ enum DifficultyLevel {
 
 enum Side { white, black }
 
-enum GameStatus { playing, checkmate, stalemate, draw }
+enum GameStatus { playing, checkmate, stalemate, draw, resigned }
 
 class Move {
   final String uci; // e.g. "e2e4", "e7e8q"

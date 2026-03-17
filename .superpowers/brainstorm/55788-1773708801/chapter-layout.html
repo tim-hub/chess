@@ -1,0 +1,126 @@
+<h2>How should chapters be laid out?</h2>
+<p class="subtitle">Each chapter = a puzzle theme. Which layout feels right for the puzzle selection screen?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:16px;font-family:sans-serif;">
+        <div style="color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Your Progress</div>
+        <!-- Chapter rows -->
+        <div style="background:#16213e;border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#4ade80,#22c55e);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">♟</div>
+          <div style="flex:1;">
+            <div style="color:#fff;font-size:13px;font-weight:600;">Checkmate in 1</div>
+            <div style="background:#0f172a;border-radius:4px;height:6px;margin-top:6px;overflow:hidden;">
+              <div style="background:#4ade80;width:72%;height:100%;border-radius:4px;"></div>
+            </div>
+            <div style="color:#888;font-size:11px;margin-top:4px;">18 / 25 solved</div>
+          </div>
+          <div style="color:#4ade80;font-size:12px;font-weight:700;">✓ 72%</div>
+        </div>
+        <div style="background:#16213e;border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#3b82f6);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⚔</div>
+          <div style="flex:1;">
+            <div style="color:#fff;font-size:13px;font-weight:600;">Forks</div>
+            <div style="background:#0f172a;border-radius:4px;height:6px;margin-top:6px;overflow:hidden;">
+              <div style="background:#60a5fa;width:30%;height:100%;border-radius:4px;"></div>
+            </div>
+            <div style="color:#888;font-size:11px;margin-top:4px;">6 / 20 solved</div>
+          </div>
+          <div style="color:#60a5fa;font-size:12px;">30%</div>
+        </div>
+        <div style="background:#16213e;border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:50%;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:2px dashed #334155;">🔒</div>
+          <div style="flex:1;">
+            <div style="color:#64748b;font-size:13px;font-weight:600;">Pins & Skewers</div>
+            <div style="background:#0f172a;border-radius:4px;height:6px;margin-top:6px;overflow:hidden;">
+              <div style="background:#334155;width:0%;height:100%;border-radius:4px;"></div>
+            </div>
+            <div style="color:#64748b;font-size:11px;margin-top:4px;">Complete Forks to unlock</div>
+          </div>
+          <div style="color:#475569;font-size:12px;">🔒</div>
+        </div>
+        <div style="background:#16213e;border-radius:8px;padding:12px 14px;display:flex;align-items:center;gap:12px;opacity:0.5;">
+          <div style="width:40px;height:40px;border-radius:50%;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:2px dashed #334155;">🔒</div>
+          <div style="flex:1;">
+            <div style="color:#64748b;font-size:13px;font-weight:600;">Endgames</div>
+            <div style="color:#64748b;font-size:11px;margin-top:4px;">Locked</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Linear unlock</h3>
+      <p>Chapters unlock in order. Complete each theme to progress to the next. Clear path, motivating.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:16px;font-family:sans-serif;">
+        <div style="color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Choose a Chapter</div>
+        <!-- Grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:linear-gradient(135deg,#1e3a2f,#143d28);border-radius:8px;padding:12px;border:1px solid #22c55e44;">
+            <div style="font-size:22px;margin-bottom:6px;">♟</div>
+            <div style="color:#fff;font-size:12px;font-weight:600;">Mate in 1</div>
+            <div style="color:#4ade80;font-size:11px;margin-top:2px;">18/25 ★★★</div>
+          </div>
+          <div style="background:linear-gradient(135deg,#1e2a3a,#142038);border-radius:8px;padding:12px;border:1px solid #3b82f644;">
+            <div style="font-size:22px;margin-bottom:6px;">⚔</div>
+            <div style="color:#fff;font-size:12px;font-weight:600;">Forks</div>
+            <div style="color:#60a5fa;font-size:11px;margin-top:2px;">6/20 ★★</div>
+          </div>
+          <div style="background:#16213e;border-radius:8px;padding:12px;border:1px solid #33415544;">
+            <div style="font-size:22px;margin-bottom:6px;">📌</div>
+            <div style="color:#fff;font-size:12px;font-weight:600;">Pins</div>
+            <div style="color:#888;font-size:11px;margin-top:2px;">0/20</div>
+          </div>
+          <div style="background:#16213e;border-radius:8px;padding:12px;border:1px solid #33415544;">
+            <div style="font-size:22px;margin-bottom:6px;">🏰</div>
+            <div style="color:#fff;font-size:12px;font-weight:600;">Endgames</div>
+            <div style="color:#888;font-size:11px;margin-top:2px;">0/15</div>
+          </div>
+          <div style="background:#16213e;border-radius:8px;padding:12px;border:1px solid #33415544;">
+            <div style="font-size:22px;margin-bottom:6px;">💥</div>
+            <div style="color:#fff;font-size:12px;font-weight:600;">Sacrifice</div>
+            <div style="color:#888;font-size:11px;margin-top:2px;">0/18</div>
+          </div>
+          <div style="background:#16213e;border-radius:8px;padding:12px;border:1px solid #33415544;">
+            <div style="font-size:22px;margin-bottom:6px;">♛</div>
+            <div style="color:#fff;font-size:12px;font-weight:600;">Promotions</div>
+            <div style="color:#888;font-size:11px;margin-top:2px;">0/12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Open grid</h3>
+      <p>All chapters always accessible. Progress tracked per chapter with stars. No gates.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#1a1a2e;border-radius:8px;padding:16px;font-family:sans-serif;">
+        <div style="color:#888;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Puzzle Path</div>
+        <!-- Path nodes -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:0;">
+          <div style="background:linear-gradient(135deg,#4ade80,#22c55e);border-radius:12px;padding:10px 20px;font-size:12px;font-weight:700;color:#fff;width:120px;text-align:center;">♟ Mate in 1<br><span style="font-size:10px;opacity:0.8;">COMPLETE ✓</span></div>
+          <div style="width:2px;height:16px;background:linear-gradient(#22c55e,#60a5fa);"></div>
+          <div style="background:linear-gradient(135deg,#3b82f6,#2563eb);border-radius:12px;padding:10px 20px;font-size:12px;font-weight:700;color:#fff;width:120px;text-align:center;">⚔ Forks<br><span style="font-size:10px;opacity:0.8;">IN PROGRESS</span></div>
+          <div style="width:2px;height:16px;background:#334155;"></div>
+          <div style="background:#1e293b;border-radius:12px;padding:10px 20px;font-size:12px;font-weight:600;color:#64748b;width:120px;text-align:center;border:2px dashed #334155;">📌 Pins<br><span style="font-size:10px;">locked</span></div>
+          <div style="width:2px;height:16px;background:#1e293b;"></div>
+          <div style="background:#1e293b;border-radius:12px;padding:10px 20px;font-size:12px;font-weight:600;color:#475569;width:120px;text-align:center;opacity:0.6;">🏰 Endgames</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Story path</h3>
+      <p>A visual chain of nodes. Duolingo-style. Tapping a locked node shows "complete X to unlock". Very clear progression.</p>
+    </div>
+  </div>
+
+</div>

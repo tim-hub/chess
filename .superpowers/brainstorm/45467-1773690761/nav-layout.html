@@ -1,0 +1,104 @@
+<h2>Home Screen Navigation</h2>
+<p class="subtitle">Where should Stats live, and how should Settings always be reachable?</p>
+
+<div class="cards">
+
+  <!-- Option A: Settings top-right, Stats as home button -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#F5F5F0;padding:16px;font-family:sans-serif;">
+      <div style="background:white;border-radius:12px;overflow:hidden;border:1px solid #E5E7EB;">
+        <!-- AppBar -->
+        <div style="background:#F5F5F0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E5E7EB;">
+          <span style="font-size:13px;font-weight:600;">Chess</span>
+          <div style="display:flex;gap:10px;">
+            <span style="font-size:16px;cursor:pointer;" title="Stats">📊</span>
+            <span style="font-size:16px;cursor:pointer;" title="Settings">⚙️</span>
+          </div>
+        </div>
+        <!-- Body -->
+        <div style="padding:24px 16px;text-align:center;">
+          <div style="width:56px;height:56px;background:#769656;border-radius:16px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:24px;">♚</div>
+          <div style="font-size:18px;font-weight:700;margin-bottom:20px;">Chess</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="background:#769656;color:white;border-radius:8px;padding:12px;font-size:13px;font-weight:600;">Play vs AI</div>
+            <div style="border:1.5px solid #769656;color:#769656;border-radius:8px;padding:12px;font-size:13px;font-weight:500;">Puzzles</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Stats + Settings both in AppBar</h3>
+      <p>Stats icon (📊) and Settings (⚙️) always visible top-right on every screen. Minimal home layout stays clean.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Stats as 3rd button on home, Settings top-right only -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#F5F5F0;padding:16px;font-family:sans-serif;">
+      <div style="background:white;border-radius:12px;overflow:hidden;border:1px solid #E5E7EB;">
+        <!-- AppBar -->
+        <div style="background:#F5F5F0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E5E7EB;">
+          <span style="font-size:13px;font-weight:600;">Chess</span>
+          <span style="font-size:16px;cursor:pointer;" title="Settings">⚙️</span>
+        </div>
+        <!-- Body -->
+        <div style="padding:20px 16px;">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="width:56px;height:56px;background:#769656;border-radius:16px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:24px;">♚</div>
+            <div style="font-size:18px;font-weight:700;">Chess</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="background:#769656;color:white;border-radius:8px;padding:12px;font-size:13px;font-weight:600;text-align:center;">Play vs AI</div>
+            <div style="border:1.5px solid #769656;color:#769656;border-radius:8px;padding:12px;font-size:13px;font-weight:500;text-align:center;">Puzzles</div>
+            <div style="border:1.5px solid #E5E7EB;color:#6B7280;border-radius:8px;padding:10px;font-size:12px;font-weight:500;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px;"><span>📊</span> My Stats</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Stats as 3rd home button, Settings top-right</h3>
+      <p>Stats is a visible action on the home screen alongside Play and Puzzles. Settings stays top-right only. Stats feels like a first-class destination.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Bottom nav bar -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#F5F5F0;padding:16px;font-family:sans-serif;">
+      <div style="background:white;border-radius:12px;overflow:hidden;border:1px solid #E5E7EB;">
+        <!-- AppBar -->
+        <div style="background:#F5F5F0;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E5E7EB;">
+          <span style="font-size:13px;font-weight:600;">Chess</span>
+          <span style="font-size:16px;cursor:pointer;">⚙️</span>
+        </div>
+        <!-- Body -->
+        <div style="padding:20px 16px 10px;">
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="width:48px;height:48px;background:#769656;border-radius:14px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:20px;">♚</div>
+            <div style="font-size:16px;font-weight:700;">Chess</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+            <div style="background:#769656;color:white;border-radius:8px;padding:11px;font-size:13px;font-weight:600;text-align:center;">Play vs AI</div>
+            <div style="border:1.5px solid #769656;color:#769656;border-radius:8px;padding:11px;font-size:13px;font-weight:500;text-align:center;">Puzzles</div>
+          </div>
+        </div>
+        <!-- Bottom nav -->
+        <div style="border-top:1px solid #E5E7EB;display:flex;padding:8px 0 4px;">
+          <div style="flex:1;text-align:center;font-size:10px;color:#769656;">
+            <div style="font-size:18px;">🏠</div>Home
+          </div>
+          <div style="flex:1;text-align:center;font-size:10px;color:#6B7280;">
+            <div style="font-size:18px;">📊</div>Stats
+          </div>
+          <div style="flex:1;text-align:center;font-size:10px;color:#6B7280;">
+            <div style="font-size:18px;">⚙️</div>Settings
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Bottom navigation bar</h3>
+      <p>Home / Stats / Settings as persistent bottom tabs. Most thumb-friendly. Bigger structural change — adds persistent navigation to all screens.</p>
+    </div>
+  </div>
+
+</div>

@@ -24,7 +24,7 @@ class GameState {
     this.fenHistory = const [],
   });
 
-  bool get canUndo => history.length >= 2 && !isAiThinking && fenHistory.length >= 2;
+  bool get canUndo => history.length >= 2 && !isAiThinking && fenHistory.isNotEmpty;
 
   /// True when it is the human player's turn to move.
   bool get isPlayerTurn {
