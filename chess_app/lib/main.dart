@@ -6,9 +6,11 @@ import 'package:chess_app/core/router/app_router.dart';
 import 'package:chess_app/core/theme/app_colors.dart';
 import 'package:chess_app/features/game/data/chess_repository_impl.dart';
 import 'package:chess_app/features/game/data/game_persistence_service.dart';
-import 'package:chess_app/features/game/data/random_move_engine.dart';
+import 'package:chess_app/features/game/data/minimax_engine.dart';
 import 'package:chess_app/features/game/data/stockfish_service.dart';
 import 'package:chess_app/features/game/domain/chess_engine.dart';
+import 'package:chess_app/features/puzzles/data/credits_service.dart';
+import 'package:chess_app/features/stats/data/stats_service.dart';
 import 'package:chess_app/features/game/domain/game_notifier.dart';
 import 'package:chess_app/features/home/presentation/home_screen.dart';
 import 'package:chess_app/features/puzzles/data/puzzle_database.dart';
@@ -23,20 +25,28 @@ Future<void> main() async {
   final settingsNotifier = SettingsNotifier();
   await settingsNotifier.load();
 
-  // Initialize chess engine — Stockfish on mobile, RandomMoveEngine on desktop/web
-  final bool isMobile = !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+  // Load persisted credits
+  final creditsService = CreditsService();
+  await creditsService.load();
+
+  final statsService = StatsService();
+  await statsService.load();
+
+  // Stockfish only works on iOS/Android. Use MinimaxEngine on macOS/desktop.
   ChessEngine chessEngine;
-  if (isMobile) {
+  if (!kIsWeb && (Platform.isIOS || Platform.isAndroid)) {
     final stockfish = StockfishService();
     try {
       await stockfish.initialize();
       chessEngine = stockfish;
+      debugPrint('Stockfish ready');
     } catch (e) {
-      debugPrint('Stockfish initialization failed, falling back to random: $e');
-      chessEngine = RandomMoveEngine();
+      debugPrint('Stockfish failed, falling back to minimax: $e');
+      chessEngine = MinimaxEngine();
     }
   } else {
-    chessEngine = RandomMoveEngine();
+    chessEngine = MinimaxEngine();
+    debugPrint('Using MinimaxEngine (Stockfish not supported on this platform)');
   }
 
   // Initialize puzzle database
@@ -66,6 +76,8 @@ Future<void> main() async {
         settingsProvider.overrideWith((ref) {
           return SettingsNotifier(settingsNotifier.currentSettings);
         }),
+        creditsProvider.overrideWith((_) => creditsService),
+        statsProvider.overrideWith((_) => statsService),
         gameRepositoryProvider.overrideWithValue(chessRepo),
         chessEngineProvider.overrideWithValue(chessEngine),
         puzzleRepositoryProvider.overrideWithValue(PuzzleRepositoryImpl()),
