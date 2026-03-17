@@ -2,7 +2,11 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final audioServiceProvider = Provider<AudioService>((_) => AudioService());
+final audioServiceProvider = Provider<AudioService>((ref) {
+  final service = AudioService();
+  ref.onDispose(service.dispose);
+  return service;
+});
 
 class AudioService {
   AudioService()
@@ -18,6 +22,7 @@ class AudioService {
   final AudioPlayer _sfx;
   bool _sfxEnabled = true;
   bool _musicEnabled = true;
+  bool _musicStarted = false;
 
   Future<void> init({required bool musicEnabled, required bool sfxEnabled}) async {
     _sfxEnabled = sfxEnabled;
@@ -27,7 +32,8 @@ class AudioService {
     await _music.setReleaseMode(ReleaseMode.loop);
     await _music.setVolume(0.4);
     if (musicEnabled) {
-      await _music.play(AssetSource('audio/music.mp3'));
+      _musicStarted = true;
+      _music.play(AssetSource('audio/music.mp3')).catchError((_) {});
     }
 
     // Configure SFX player volume
@@ -38,25 +44,30 @@ class AudioService {
 
   void playMove() {
     if (!_sfxEnabled) return;
-    _sfx.play(AssetSource('audio/move.mp3'));
+    _sfx.play(AssetSource('audio/move.mp3')).catchError((_) {});
   }
 
   void playWrong() {
     if (!_sfxEnabled) return;
-    _sfx.play(AssetSource('audio/wrong.mp3'));
+    _sfx.play(AssetSource('audio/wrong.mp3')).catchError((_) {});
   }
 
   void playSuccess() {
     if (!_sfxEnabled) return;
-    _sfx.play(AssetSource('audio/success.mp3'));
+    _sfx.play(AssetSource('audio/success.mp3')).catchError((_) {});
   }
 
   void setMusicEnabled(bool enabled) {
     _musicEnabled = enabled;
     if (enabled) {
-      _music.resume();
+      if (_musicStarted) {
+        _music.resume().catchError((_) {});
+      } else {
+        _musicStarted = true;
+        _music.play(AssetSource('audio/music.mp3')).catchError((_) {});
+      }
     } else {
-      _music.pause();
+      _music.pause().catchError((_) {});
     }
   }
 

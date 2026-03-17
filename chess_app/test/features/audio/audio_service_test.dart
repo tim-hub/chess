@@ -256,13 +256,28 @@ void main() {
       expect(platform.methodsFor(r.sfxId).where((m) => m == 'setSourceUrl' || m == 'resume'), isNotEmpty);
     });
 
-    test('setMusicEnabled(true) calls resume on music player', () async {
+    test('setMusicEnabled(true) calls play (setSourceUrl) on first enable', () async {
       final r = await _build(music: false);
       platform.methodLog.clear();
 
       r.service.setMusicEnabled(true);
-      await Future<void>.delayed(Duration.zero);
+      await pumpEventQueue(times: 100); // let fire-and-forget play() settle
 
+      // First enable: music was never started, so play() is called which routes
+      // through setSourceUrl on the platform interface.
+      expect(platform.methodsFor(r.musicId), contains('setSourceUrl'));
+    });
+
+    test('setMusicEnabled(true) calls resume after prior start', () async {
+      // init with music on (marks _musicStarted = true), then disable, then re-enable
+      final r = await _build(music: true);
+      r.service.setMusicEnabled(false);
+      platform.methodLog.clear(); // clear init + disable calls
+
+      r.service.setMusicEnabled(true);
+      await pumpEventQueue(times: 100); // let async resume() settle
+
+      // second enable should call resume, not play
       expect(platform.methodsFor(r.musicId), contains('resume'));
     });
 
@@ -285,6 +300,7 @@ void main() {
       platform.methodLog.clear();
 
       await service.init(musicEnabled: true, sfxEnabled: true);
+      await pumpEventQueue(times: 100); // let fire-and-forget play() settle
 
       // play() routes through setSourceUrl then resume on the platform
       expect(
