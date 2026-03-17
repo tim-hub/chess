@@ -55,7 +55,7 @@ class HomeScreen extends ConsumerWidget {
               Text('Chess', style: AppTextStyles.heading1),
               const SizedBox(height: 48),
 
-              // Play vs AI
+              // Play with bot locally
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
@@ -73,7 +73,7 @@ class HomeScreen extends ConsumerWidget {
                           width: 20,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : const Text('Play vs AI', style: TextStyle(fontSize: 18)),
+                      : const Text('Play with bot locally', style: TextStyle(fontSize: 18)),
                 ),
               ),
               const SizedBox(height: 16),

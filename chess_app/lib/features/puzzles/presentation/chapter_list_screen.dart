@@ -86,9 +86,24 @@ class _ChapterListScreenState extends ConsumerState<ChapterListScreen> {
       return;
     }
 
+    if (chapter.puzzleIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No puzzles available in this chapter yet')),
+      );
+      return;
+    }
+
     final notifier = ref.read(chapterNotifierProvider.notifier);
-    final puzzleId = notifier.nextPuzzleId(chapter.id);
-    if (puzzleId == null) return;
+
+    // Compute next unsolved puzzle directly from the chapter object so we
+    // never silently fail if the notifier's state lookup returns null.
+    String puzzleId = chapter.puzzleIds.first; // fallback: replay from first
+    for (final id in chapter.puzzleIds) {
+      if (!notifier.isSolved(chapter.id, id)) {
+        puzzleId = id;
+        break;
+      }
+    }
 
     context.push(
       '/puzzles/play/$puzzleId',

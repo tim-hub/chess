@@ -40,6 +40,11 @@ class GameNotifier extends StateNotifier<GameState?> {
       status: GameStatus.playing,
       fenHistory: const [], // populated per-round in applyPlayerMove
     );
+
+    // Player chose black → bot plays white and must move first.
+    if (playerColor == Side.black) {
+      _triggerAiMove(result.fen, difficulty);
+    }
   }
 
   Future<void> applyPlayerMove(String uciMove) async {
