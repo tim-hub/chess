@@ -94,9 +94,9 @@ void main() {
     expect(state.history[1].san, 'e5');
     expect(state.isAiThinking, isFalse);
 
-    // fenHistory invariant: length == history.length + 1
-    expect(state.fenHistory.length, 3); // startFen + preFen_e4 + preFen_e5
-    expect(state.fenHistory[0], GameState.kStartFen);
+    // fenHistory invariant: one entry per player move
+    expect(state.fenHistory.length, 1);
+    expect(state.fenHistory[0], GameState.kStartFen); // pre-player-move FEN stored by applyPlayerMove
   });
 
   test('startGame seeds fenHistory with starting FEN', () {
@@ -111,7 +111,7 @@ void main() {
     );
 
     final state = container.read(gameNotifierProvider)!;
-    expect(state.fenHistory, [GameState.kStartFen]);
+    expect(state.fenHistory, isEmpty);
   });
 
   test('applyPlayerMove does not trigger AI if game is over', () async {
@@ -220,7 +220,7 @@ void main() {
       final state = container.read(gameNotifierProvider)!;
       expect(state.history, isEmpty);
       expect(state.fen, GameState.kStartFen);
-      expect(state.fenHistory, [GameState.kStartFen]);
+      expect(state.fenHistory, isEmpty);
       expect(state.isAiThinking, isFalse);
       expect(state.status, GameStatus.playing);
       verify(() => repo.loadPosition(GameState.kStartFen)).called(greaterThan(0));
