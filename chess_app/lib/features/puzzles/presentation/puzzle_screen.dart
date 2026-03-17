@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:chess_app/core/theme/app_colors.dart';
-import 'package:chess_app/core/theme/app_text_styles.dart';
 import 'package:chess_app/features/game/domain/game_notifier.dart';
 import 'package:chess_app/features/game/presentation/board/board_widget.dart';
+import 'package:chess_app/features/puzzles/data/credits_service.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_notifier.dart';
 import 'package:chess_app/features/settings/data/settings_repository.dart';
 
@@ -20,6 +20,8 @@ class PuzzleScreen extends ConsumerStatefulWidget {
 class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
   String? _selectedSquare;
   List<String> _legalMovesFromSelected = [];
+  bool _solvedShown = false;
+  bool _hintUsed = false;
 
   @override
   void initState() {
@@ -52,7 +54,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
 
   void _onSquareTap(String square) {
     final session = ref.read(puzzleNotifierProvider);
-    if (session == null || !session.isPlayerTurn) return;
+    if (session == null || !session.isPlayerTurn || session.isComplete) return;
 
     final gameRepo = ref.read(gameRepositoryProvider);
     final position = _parseFen(session.currentFen);
@@ -61,7 +63,6 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
       final piece = position[square];
       if (piece == null) return;
 
-      // Determine player color from FEN active color
       final activeColor = session.currentFen.split(' ')[1];
       final isWhitePiece = piece == piece.toUpperCase();
       final isPlayerPiece = (activeColor == 'w') == isWhitePiece;
@@ -86,10 +87,76 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     }
   }
 
+  /// Show the expected move as a board highlight and deduct 2 credits.
+  void _useHint() {
+    final session = ref.read(puzzleNotifierProvider);
+    if (session == null || session.expectedMove == null) return;
+
+    final move = session.expectedMove!;
+    final from = move.substring(0, 2);
+    final to = move.substring(2, 4);
+
+    // Deduct 2 credits (won't go below 0)
+    ref.read(creditsProvider.notifier).deduct(2);
+
+    setState(() {
+      _hintUsed = true;
+      _selectedSquare = from;
+      _legalMovesFromSelected = [move.length > 4 ? move.substring(0, 4) : move];
+    });
+
+    ref.read(puzzleNotifierProvider.notifier).useHint();
+    debugPrint('Hint: move $from → $to');
+  }
+
+  void _onPuzzleSolved() {
+    final session = ref.read(puzzleNotifierProvider);
+    if (session == null) return;
+
+    // 10 credits base − 2 per hint, minimum 0
+    final earned = (10 - session.hintCount * 2).clamp(0, 10);
+    ref.read(creditsProvider.notifier).add(earned);
+
+    _showSolvedBanner(earned);
+  }
+
+  void _showSolvedBanner(int earned) {
+    showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _SolvedSheet(
+        earned: earned,
+        onNext: () {
+          Navigator.of(context).pop();
+          _loadNext();
+        },
+        onBack: () {
+          Navigator.of(context).pop();
+          context.pop();
+        },
+      ),
+    );
+  }
+
+  void _loadNext() {
+    setState(() {
+      _solvedShown = false;
+      _hintUsed = false;
+      _selectedSquare = null;
+      _legalMovesFromSelected = [];
+    });
+    ref.read(puzzleNotifierProvider.notifier).loadNextPuzzle();
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = ref.watch(puzzleNotifierProvider);
     final settings = ref.watch(settingsProvider);
+    final credits = ref.watch(creditsProvider);
 
     if (session == null) {
       return Scaffold(
@@ -98,9 +165,16 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
       );
     }
 
+    if (session.isComplete && !_solvedShown) {
+      _solvedShown = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _onPuzzleSolved();
+      });
+    }
+
     final position = _parseFen(session.currentFen);
     final activeColor = session.currentFen.split(' ')[1];
-    final flipped = activeColor == 'b'; // show board from player's perspective
+    final flipped = activeColor == 'b';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -111,22 +185,54 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          // Credits badge
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Chip(
+              avatar: const Icon(Icons.star_rounded,
+                  size: 16, color: Color(0xFFF59E0B)),
+              label: Text(
+                '$credits',
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+              backgroundColor: const Color(0xFFFEF3C7),
+              side: BorderSide.none,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              visualDensity: VisualDensity.compact,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              session.isComplete ? '✓ Puzzle solved!' :
-              session.isFailed ? 'Wrong move — try again' :
-              'Find the best move',
-              style: session.isComplete
-                  ? AppTextStyles.heading2.copyWith(color: AppColors.successGreen)
-                  : session.isFailed
-                      ? AppTextStyles.heading2.copyWith(color: AppColors.errorRed)
-                      : AppTextStyles.heading2,
+          // Fixed-height status bar
+          SizedBox(
+            height: 52,
+            child: Center(
+              child: session.isFailed
+                  ? const Text(
+                      'Wrong move — try again',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.errorRed,
+                      ),
+                    )
+                  : const Text(
+                      'Find the best move',
+                      style: TextStyle(
+                          fontSize: 15, color: AppColors.textSecondary),
+                    ),
             ),
           ),
+
+          // Board — always same size
           Expanded(
             child: BoardWidget(
               flipped: flipped,
@@ -139,32 +245,141 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
               onSquareTap: _onSquareTap,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+
+          // Fixed-height bottom controls
+          SizedBox(
+            height: 72,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  // Hint button
+                  OutlinedButton.icon(
+                    onPressed: (!_hintUsed && !session.isComplete)
+                        ? _useHint
+                        : null,
+                    icon: Icon(
+                      _hintUsed
+                          ? Icons.lightbulb
+                          : Icons.lightbulb_outline,
+                    ),
+                    label: Text(_hintUsed ? 'Hint used (−2)' : 'Hint (−2 ⭐)'),
+                  ),
+                  const SizedBox(width: 12),
+                  if (session.isFailed)
+                    FilledButton(
+                      style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.accent),
+                      onPressed: () {
+                        setState(() {
+                          _hintUsed = false;
+                          _selectedSquare = null;
+                          _legalMovesFromSelected = [];
+                        });
+                        ref
+                            .read(puzzleNotifierProvider.notifier)
+                            .resetPuzzle();
+                      },
+                      child: const Text('Try again'),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SolvedSheet extends StatefulWidget {
+  final int earned;
+  final VoidCallback onNext;
+  final VoidCallback onBack;
+
+  const _SolvedSheet({
+    required this.earned,
+    required this.onNext,
+    required this.onBack,
+  });
+
+  @override
+  State<_SolvedSheet> createState() => _SolvedSheetState();
+}
+
+class _SolvedSheetState extends State<_SolvedSheet> {
+  @override
+  void initState() {
+    super.initState();
+    // Auto-advance to next puzzle after 2.5 s
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted) widget.onNext();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle_rounded,
+                color: AppColors.successGreen, size: 56),
+            const SizedBox(height: 12),
+            const Text(
+              'Puzzle Solved!',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                OutlinedButton.icon(
-                  onPressed: session.hintCount < 2
-                      ? () => ref.read(puzzleNotifierProvider.notifier).useHint()
-                      : null,
-                  icon: const Icon(Icons.lightbulb_outline),
-                  label: Text(
-                    session.hintCount == 0 ? 'Hint' :
-                    session.hintCount == 1 ? 'More hint' : 'No more hints',
+                const Icon(Icons.star_rounded,
+                    color: Color(0xFFF59E0B), size: 20),
+                const SizedBox(width: 4),
+                Text(
+                  '+${widget.earned} credits',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFF59E0B),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Next puzzle loading…',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: widget.onBack,
+                    child: const Text('Back'),
                   ),
                 ),
                 const SizedBox(width: 12),
-                if (session.isFailed)
-                  FilledButton(
-                    style: FilledButton.styleFrom(backgroundColor: AppColors.accent),
-                    onPressed: () => ref.read(puzzleNotifierProvider.notifier).resetPuzzle(),
-                    child: const Text('Try again'),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.accent),
+                    onPressed: widget.onNext,
+                    child: const Text('Next Now'),
                   ),
+                ),
               ],
             ),
-          ),
-          const SizedBox(height: 8),
-        ],
+          ],
+        ),
       ),
     );
   }

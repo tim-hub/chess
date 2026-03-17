@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:chess_app/core/theme/app_colors.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_filter.dart';
@@ -89,6 +90,12 @@ class PuzzleListScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: AppColors.background,
         title: const Text('Puzzles'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
       ),
       body: CustomScrollView(
         slivers: [

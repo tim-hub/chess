@@ -25,6 +25,12 @@ class _DifficultySetupScreenState
       appBar: AppBar(
         title: const Text('New Game'),
         backgroundColor: AppColors.background,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
       ),
       backgroundColor: AppColors.background,
       body: Padding(
@@ -36,6 +42,7 @@ class _DifficultySetupScreenState
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
+              runSpacing: 10,
               children: DifficultyLevel.values.map((d) {
                 return ChoiceChip(
                   label: Text(d.label),
@@ -53,31 +60,31 @@ class _DifficultySetupScreenState
             const SizedBox(height: 32),
             Text('Play as', style: AppTextStyles.heading2),
             const SizedBox(height: 12),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 10,
               children: [
-                _ColorOption(
-                  label: 'White',
-                  isSelected: _color == Side.white,
-                  onTap: () => setState(() => _color = Side.white),
+                ChoiceChip(
+                  label: const Text('White'),
+                  selected: _color == Side.white,
+                  onSelected: (_) => setState(() => _color = Side.white),
+                  selectedColor: AppColors.accent,
+                  labelStyle: TextStyle(
+                    color: _color == Side.white
+                        ? Colors.white
+                        : AppColors.textPrimary,
+                  ),
                 ),
-                const SizedBox(width: 12),
-                _ColorOption(
-                  label: 'Black',
-                  isSelected: _color == Side.black,
-                  onTap: () => setState(() => _color = Side.black),
-                ),
-                const SizedBox(width: 12),
-                _ColorOption(
-                  label: 'Random',
-                  isSelected: false,
-                  onTap: () {
-                    setState(() {
-                      _color =
-                          DateTime.now().millisecondsSinceEpoch.isEven
-                              ? Side.white
-                              : Side.black;
-                    });
-                  },
+                ChoiceChip(
+                  label: const Text('Black'),
+                  selected: _color == Side.black,
+                  onSelected: (_) => setState(() => _color = Side.black),
+                  selectedColor: AppColors.accent,
+                  labelStyle: TextStyle(
+                    color: _color == Side.black
+                        ? Colors.white
+                        : AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -107,39 +114,3 @@ class _DifficultySetupScreenState
   }
 }
 
-class _ColorOption extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ColorOption({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.accent : AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? AppColors.accent : AppColors.divider,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-            fontWeight:
-                isSelected ? FontWeight.w600 : FontWeight.normal,
-          ),
-        ),
-      ),
-    );
-  }
-}
