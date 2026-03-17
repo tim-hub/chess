@@ -58,4 +58,49 @@ void main() {
     expect(updated.currentFen, 'fen2');
     expect(updated.nextMoveIndex, 2);
   });
+
+  test('hintFromSquare is null when hintCount is 0', () {
+    final session = PuzzleSession(
+      puzzle: testPuzzle,
+      currentFen: 'some_fen',
+      nextMoveIndex: 1,
+      hintCount: 0,
+    );
+    expect(session.hintFromSquare, isNull);
+    expect(session.hintToSquare, isNull);
+  });
+
+  test('hintFromSquare returns first 2 chars of expectedMove when hintCount >= 1', () {
+    final session = PuzzleSession(
+      puzzle: testPuzzle,
+      currentFen: 'some_fen',
+      nextMoveIndex: 1,
+      hintCount: 1,
+    );
+    // testPuzzle moves[1] = 'e7e5'
+    expect(session.hintFromSquare, 'e7');
+    expect(session.hintToSquare, isNull); // only hintCount=2 reveals to-square
+  });
+
+  test('hintToSquare returns chars 2-4 of expectedMove when hintCount >= 2', () {
+    final session = PuzzleSession(
+      puzzle: testPuzzle,
+      currentFen: 'some_fen',
+      nextMoveIndex: 1,
+      hintCount: 2,
+    );
+    expect(session.hintFromSquare, 'e7');
+    expect(session.hintToSquare, 'e5');
+  });
+
+  test('hintFromSquare is null when expectedMove is null (puzzle complete)', () {
+    final session = PuzzleSession(
+      puzzle: testPuzzle,
+      currentFen: 'some_fen',
+      nextMoveIndex: 4, // past end
+      hintCount: 2,
+    );
+    expect(session.hintFromSquare, isNull);
+    expect(session.hintToSquare, isNull);
+  });
 }

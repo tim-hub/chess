@@ -59,6 +59,17 @@ class PuzzleRepositoryImpl implements PuzzleRepository {
   }
 
   @override
+  Future<Puzzle?> getNextPuzzle(String excludeId) async {
+    final db = await _db;
+    final rows = await db.rawQuery(
+      'SELECT id, fen, moves, rating, themes FROM puzzles WHERE id != ? ORDER BY RANDOM() LIMIT 1',
+      [excludeId],
+    );
+    if (rows.isEmpty) return null;
+    return Puzzle.fromMap(rows.first);
+  }
+
+  @override
   Future<Puzzle?> getPuzzleById(String id) async {
     final db = await _db;
     final rows = await db.query(
@@ -69,5 +80,28 @@ class PuzzleRepositoryImpl implements PuzzleRepository {
     );
     if (rows.isEmpty) return null;
     return Puzzle.fromMap(rows.first);
+  }
+
+  @override
+  Future<List<String>> getPuzzleIdsByThemeTags(
+    List<String> themeTags, {
+    int limit = 50,
+  }) async {
+    if (themeTags.isEmpty) return [];
+    final db = await _db;
+    // Pad themes with spaces so every tag can be matched as ' tag ' regardless
+    // of position. Avoids FTS5 tokenizer issues with camelCase tag names.
+    final whereClauses = themeTags
+        .map((_) => "(' ' || themes || ' ') LIKE ?")
+        .join(' OR ');
+    final args = <dynamic>[
+      ...themeTags.map((tag) => '% $tag %'),
+      limit,
+    ];
+    final rows = await db.rawQuery(
+      'SELECT DISTINCT id FROM puzzles WHERE $whereClauses ORDER BY rating LIMIT ?',
+      args,
+    );
+    return rows.map((r) => r['id'] as String).toList();
   }
 }
