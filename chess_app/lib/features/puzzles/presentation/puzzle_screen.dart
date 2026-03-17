@@ -165,9 +165,9 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
       if (prev == null || next == null) return;
       final audio = ref.read(audioServiceProvider);
 
-      // Correct move accepted (FEN changed, not failed, not yet complete —
-      // complete is handled separately in _onPuzzleSolved to avoid double-firing)
-      if (!next.isFailed && !next.isComplete && next.currentFen != prev.currentFen) {
+      // Correct move accepted — only fires for player moves, not engine replies.
+      // Engine replies arrive when prev.isPlayerTurn == false.
+      if (prev.isPlayerTurn && !next.isFailed && !next.isComplete && next.currentFen != prev.currentFen) {
         audio.playMove();
         return;
       }
