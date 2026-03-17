@@ -1,14 +1,24 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chess_app/core/theme/board_theme.dart';
+import 'package:chess_app/features/audio/audio_service.dart';
 import '../domain/app_settings.dart';
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>(
-  (ref) => SettingsNotifier(),
+  (ref) => SettingsNotifier(ref),
 );
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
-  SettingsNotifier([super.initial = const AppSettings()]);
+  /// Live constructor — receives a real [Ref] from Riverpod.
+  SettingsNotifier(this._ref, [super.initial = const AppSettings()]);
+
+  /// Used in [main()] for pre-loading before [ProviderScope] exists.
+  /// Never calls toggle methods; does not need a live [Ref].
+  @visibleForTesting
+  SettingsNotifier.forLoading() : _ref = null, super(const AppSettings());
+
+  final Ref? _ref;
 
   /// Public accessor for the current settings value (used during app startup).
   AppSettings get currentSettings => state;
@@ -46,28 +56,20 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await prefs.setString('settings.pieceSet', pieceSet);
   }
 
-  /// Toggles sound effects on/off.
   void toggleSoundEffects() {
+    assert(_ref != null, 'toggleSoundEffects() must not be called on a forLoading() instance');
     final next = !state.soundEffects;
     state = state.copyWith(soundEffects: next);
-    _persistBool('settings.sound_effects', next)
-        .catchError((_) {}); // persist failure is non-fatal; state already updated
-    // AudioService notification added in Task 4 (Ref injection)
+    _persistBool('settings.sound_effects', next).catchError((_) {});
+    _ref!.read(audioServiceProvider).setSfxEnabled(next);
   }
 
-  /// Toggles background music on/off.
   void toggleMusic() {
+    assert(_ref != null, 'toggleMusic() must not be called on a forLoading() instance');
     final next = !state.music;
     state = state.copyWith(music: next);
-    _persistBool('settings.music', next)
-        .catchError((_) {}); // persist failure is non-fatal; state already updated
-    // AudioService notification added in Task 4 (Ref injection)
-  }
-
-  Future<void> _persistBool(String key, bool value) async {
-    _prefsCompleter ??= SharedPreferences.getInstance();
-    final prefs = await _prefsCompleter!;
-    await prefs.setBool(key, value);
+    _persistBool('settings.music', next).catchError((_) {});
+    _ref!.read(audioServiceProvider).setMusicEnabled(next);
   }
 
   Future<void> toggleLegalHints() async {
@@ -80,5 +82,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final next = !state.coordinates;
     state = state.copyWith(coordinates: next);
     await _persistBool('settings.coordinates', next);
+  }
+
+  Future<void> _persistBool(String key, bool value) async {
+    _prefsCompleter ??= SharedPreferences.getInstance();
+    final prefs = await _prefsCompleter!;
+    await prefs.setBool(key, value);
   }
 }

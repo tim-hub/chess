@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:chess_app/core/router/app_router.dart';
 import 'package:chess_app/core/theme/app_colors.dart';
+import 'package:chess_app/features/audio/audio_service.dart';
 import 'package:chess_app/features/game/data/chess_repository_impl.dart';
 import 'package:chess_app/features/game/data/game_persistence_service.dart';
 import 'package:chess_app/features/game/data/minimax_engine.dart';
@@ -22,8 +23,16 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize settings
-  final settingsNotifier = SettingsNotifier();
-  await settingsNotifier.load();
+  // ignore: invalid_use_of_visible_for_testing_member
+  final settingsLoader = SettingsNotifier.forLoading();
+  await settingsLoader.load();
+
+  // Initialize AudioService with loaded settings
+  final audioService = AudioService();
+  await audioService.init(
+    musicEnabled: settingsLoader.currentSettings.music,
+    sfxEnabled: settingsLoader.currentSettings.soundEffects,
+  );
 
   // Load persisted credits
   final creditsService = CreditsService();
@@ -73,9 +82,10 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [
-        settingsProvider.overrideWith((ref) {
-          return SettingsNotifier(settingsNotifier.currentSettings);
-        }),
+        settingsProvider.overrideWith(
+          (ref) => SettingsNotifier(ref, settingsLoader.currentSettings),
+        ),
+        audioServiceProvider.overrideWithValue(audioService),
         creditsProvider.overrideWith((_) => creditsService),
         statsProvider.overrideWith((_) => statsService),
         gameRepositoryProvider.overrideWithValue(chessRepo),

@@ -1,4 +1,5 @@
 import 'package:chess_app/core/theme/board_theme.dart';
+import 'package:chess_app/features/audio/audio_service.dart';
 import 'package:chess_app/features/settings/data/settings_repository.dart';
 import 'package:chess_app/features/settings/domain/app_settings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+  });
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
@@ -62,7 +67,9 @@ void main() {
   });
 
   test('toggleSoundEffects flips state and persists', () async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(overrides: [
+      audioServiceProvider.overrideWithValue(_FakeAudioService()),
+    ]);
     addTearDown(container.dispose);
 
     // load() must be called first to populate _prefsCompleter (or lazy init handles it)
@@ -85,7 +92,9 @@ void main() {
   });
 
   test('toggleMusic flips state and persists', () async {
-    final container = ProviderContainer();
+    final container = ProviderContainer(overrides: [
+      audioServiceProvider.overrideWithValue(_FakeAudioService()),
+    ]);
     addTearDown(container.dispose);
 
     await container.read(settingsProvider.notifier).load();
@@ -104,4 +113,57 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(prefs.getBool('settings.music'), isTrue);
   });
+
+  group('toggle AudioService notifications', () {
+    late _FakeAudioService fakeAudio;
+
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+      fakeAudio = _FakeAudioService();
+    });
+
+    test('toggleSoundEffects notifies AudioService', () async {
+      final container = ProviderContainer(overrides: [
+        audioServiceProvider.overrideWithValue(fakeAudio),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(settingsProvider.notifier).load();
+      container.read(settingsProvider.notifier).toggleSoundEffects();
+
+      expect(fakeAudio.calls, contains('setSfxEnabled:false'));
+    });
+
+    test('toggleMusic notifies AudioService', () async {
+      final container = ProviderContainer(overrides: [
+        audioServiceProvider.overrideWithValue(fakeAudio),
+      ]);
+      addTearDown(container.dispose);
+
+      await container.read(settingsProvider.notifier).load();
+      container.read(settingsProvider.notifier).toggleMusic();
+
+      expect(fakeAudio.calls, contains('setMusicEnabled:false'));
+    });
+  });
+}
+
+// Fake AudioService for testing toggle notifications
+class _FakeAudioService implements AudioService {
+  final List<String> calls = [];
+
+  @override
+  Future<void> init({required bool musicEnabled, required bool sfxEnabled}) async {}
+  @override
+  void playMove() {}
+  @override
+  void playWrong() {}
+  @override
+  void playSuccess() {}
+  @override
+  void setMusicEnabled(bool enabled) => calls.add('setMusicEnabled:$enabled');
+  @override
+  void setSfxEnabled(bool enabled) => calls.add('setSfxEnabled:$enabled');
+  @override
+  void dispose() {}
 }
