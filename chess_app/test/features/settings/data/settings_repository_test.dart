@@ -65,7 +65,7 @@ void main() {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
-    // load() must be called first to populate _prefs (or lazy init handles it)
+    // load() must be called first to populate _prefsCompleter (or lazy init handles it)
     await container.read(settingsProvider.notifier).load();
 
     container.read(settingsProvider.notifier).toggleSoundEffects();
@@ -78,6 +78,10 @@ void main() {
 
     container.read(settingsProvider.notifier).toggleSoundEffects();
     expect(container.read(settingsProvider).soundEffects, isTrue);
+
+    // Wait for the second fire-and-forget persist to complete
+    await Future<void>.delayed(Duration.zero);
+    expect(prefs.getBool('settings.sound_effects'), isTrue);
   });
 
   test('toggleMusic flips state and persists', () async {
@@ -95,5 +99,9 @@ void main() {
 
     container.read(settingsProvider.notifier).toggleMusic();
     expect(container.read(settingsProvider).music, isTrue);
+
+    // Wait for the second fire-and-forget persist to complete
+    await Future<void>.delayed(Duration.zero);
+    expect(prefs.getBool('settings.music'), isTrue);
   });
 }

@@ -13,33 +13,36 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Public accessor for the current settings value (used during app startup).
   AppSettings get currentSettings => state;
 
-  SharedPreferences? _prefs;
+  Future<SharedPreferences>? _prefsCompleter;
 
   Future<void> load() async {
-    _prefs = await SharedPreferences.getInstance();
+    _prefsCompleter ??= SharedPreferences.getInstance();
+    final prefs = await _prefsCompleter!;
     state = AppSettings(
       boardTheme: BoardTheme.fromKey(
-        _prefs!.getString('settings.boardTheme') ?? 'greenClean',
+        prefs.getString('settings.boardTheme') ?? 'greenClean',
       ),
-      pieceSet: _prefs!.getString('settings.pieceSet') ?? 'cburnett',
-      soundEffects: _prefs!.getBool('settings.sound_effects')
-          ?? _prefs!.getBool('settings.sound') // legacy migration
+      pieceSet: prefs.getString('settings.pieceSet') ?? 'cburnett',
+      soundEffects: prefs.getBool('settings.sound_effects')
+          ?? prefs.getBool('settings.sound') // legacy migration
           ?? true,
-      music: _prefs!.getBool('settings.music') ?? true,
-      legalHints: _prefs!.getBool('settings.legalHints') ?? true,
-      coordinates: _prefs!.getBool('settings.coordinates') ?? true,
+      music: prefs.getBool('settings.music') ?? true,
+      legalHints: prefs.getBool('settings.legalHints') ?? true,
+      coordinates: prefs.getBool('settings.coordinates') ?? true,
     );
   }
 
   Future<void> updateBoardTheme(BoardTheme theme) async {
     state = state.copyWith(boardTheme: theme);
-    final prefs = await SharedPreferences.getInstance();
+    _prefsCompleter ??= SharedPreferences.getInstance();
+    final prefs = await _prefsCompleter!;
     await prefs.setString('settings.boardTheme', theme.key);
   }
 
   Future<void> updatePieceSet(String pieceSet) async {
     state = state.copyWith(pieceSet: pieceSet);
-    final prefs = await SharedPreferences.getInstance();
+    _prefsCompleter ??= SharedPreferences.getInstance();
+    final prefs = await _prefsCompleter!;
     await prefs.setString('settings.pieceSet', pieceSet);
   }
 
@@ -47,7 +50,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void toggleSoundEffects() {
     final next = !state.soundEffects;
     state = state.copyWith(soundEffects: next);
-    _persistBool('settings.sound_effects', next); // fire-and-forget
+    _persistBool('settings.sound_effects', next)
+        .catchError((_) {}); // persist failure is non-fatal; state already updated
     // AudioService notification added in Task 4 (Ref injection)
   }
 
@@ -55,24 +59,26 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   void toggleMusic() {
     final next = !state.music;
     state = state.copyWith(music: next);
-    _persistBool('settings.music', next); // fire-and-forget
+    _persistBool('settings.music', next)
+        .catchError((_) {}); // persist failure is non-fatal; state already updated
     // AudioService notification added in Task 4 (Ref injection)
   }
 
   Future<void> _persistBool(String key, bool value) async {
-    _prefs ??= await SharedPreferences.getInstance();
-    await _prefs!.setBool(key, value);
+    _prefsCompleter ??= SharedPreferences.getInstance();
+    final prefs = await _prefsCompleter!;
+    await prefs.setBool(key, value);
   }
 
   Future<void> toggleLegalHints() async {
-    state = state.copyWith(legalHints: !state.legalHints);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('settings.legalHints', state.legalHints);
+    final next = !state.legalHints;
+    state = state.copyWith(legalHints: next);
+    await _persistBool('settings.legalHints', next);
   }
 
   Future<void> toggleCoordinates() async {
-    state = state.copyWith(coordinates: !state.coordinates);
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('settings.coordinates', state.coordinates);
+    final next = !state.coordinates;
+    state = state.copyWith(coordinates: next);
+    await _persistBool('settings.coordinates', next);
   }
 }
