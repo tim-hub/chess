@@ -36,6 +36,10 @@ void main() {
     test('0 stars when totalCount is 0', () {
       expect(chapter(solved: 0, total: 0).starCount, 0);
     });
+
+    test('2 stars at exact 75% boundary', () {
+      expect(chapter(solved: 3, total: 4).starCount, 2); // exactly 75%
+    });
   });
 
   group('PuzzleChapterRegistry', () {
@@ -61,6 +65,23 @@ void main() {
     test('every chapter definition has non-empty themeTags', () {
       for (final def in kChapterDefinitions) {
         expect(def.themeTags, isNotEmpty, reason: '${def.id} has no theme tags');
+      }
+    });
+
+    test('every themeTags entry in kChapterDefinitions has a kTagToChapterId entry', () {
+      for (final def in kChapterDefinitions) {
+        for (final tag in def.themeTags) {
+          expect(kTagToChapterId.containsKey(tag), isTrue,
+              reason: 'tag $tag in chapter ${def.id} is missing from kTagToChapterId');
+        }
+      }
+    });
+
+    test('every kTagToChapterId value is a valid chapter id', () {
+      final validIds = kChapterDefinitions.map((d) => d.id).toSet();
+      for (final entry in kTagToChapterId.entries) {
+        expect(validIds.contains(entry.value), isTrue,
+            reason: 'kTagToChapterId[${entry.key}] = ${entry.value} is not a valid chapter id');
       }
     });
   });

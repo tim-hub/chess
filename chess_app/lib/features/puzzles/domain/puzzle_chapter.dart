@@ -14,7 +14,7 @@ class PuzzleChapter {
     required this.puzzleIds,
     required this.solvedCount,
     required this.isUnlocked,
-  });
+  }) : assert(solvedCount >= 0, 'solvedCount must be non-negative');
 
   int get totalCount => puzzleIds.length;
 
