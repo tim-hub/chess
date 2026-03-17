@@ -5,6 +5,7 @@ import 'package:chess_app/core/theme/app_colors.dart';
 import 'package:chess_app/features/audio/audio_service.dart';
 import 'package:chess_app/features/game/domain/game_notifier.dart';
 import 'package:chess_app/features/game/presentation/board/board_widget.dart';
+import 'package:chess_app/features/game/presentation/promotion_modal.dart';
 import 'package:chess_app/features/puzzles/data/credits_service.dart';
 import 'package:chess_app/features/puzzles/domain/chapter_notifier.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_chapter.dart';
@@ -69,7 +70,7 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     return position;
   }
 
-  void _onSquareTap(String square) {
+  void _onSquareTap(String square) async {
     final session = ref.read(puzzleNotifierProvider);
     if (session == null || !session.isPlayerTurn || session.isComplete) return;
 
@@ -94,7 +95,36 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
         _legalMovesFromSelected = movesFromSquare;
       });
     } else {
-      final uciMove = '$_selectedSquare$square';
+      final uciBase = '$_selectedSquare$square';
+
+      // Check for pawn promotion (legal moves include 5-char variants like e7e8q).
+      final legalResult = gameRepo.loadPosition(session.currentFen);
+      final isPromotion = legalResult.legalMoves
+          .any((m) => m.length == 5 && m.startsWith(uciBase));
+
+      String uciMove;
+      if (isPromotion) {
+        final piece = position[_selectedSquare!];
+        final isWhite = piece != null && piece == piece.toUpperCase();
+        final promotion = await showPromotionPicker(
+          context,
+          isWhite: isWhite,
+          pieceSet: ref.read(settingsProvider).pieceSet,
+        );
+        if (!mounted) return;
+        if (promotion == null) {
+          // User dismissed the picker — deselect.
+          setState(() {
+            _selectedSquare = null;
+            _legalMovesFromSelected = [];
+          });
+          return;
+        }
+        uciMove = '$uciBase$promotion';
+      } else {
+        uciMove = uciBase;
+      }
+
       setState(() {
         _selectedSquare = null;
         _legalMovesFromSelected = [];
