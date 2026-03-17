@@ -26,7 +26,7 @@ class AnimatedPiece extends StatelessWidget {
   Widget build(BuildContext context) {
     return TweenAnimationBuilder<Offset>(
       tween: Tween(begin: fromOffset, end: toOffset),
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       onEnd: onComplete,
       builder: (context, offset, child) {
