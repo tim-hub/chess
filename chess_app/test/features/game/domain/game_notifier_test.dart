@@ -3,12 +3,23 @@ import 'package:chess_app/features/game/domain/game_notifier.dart';
 import 'package:chess_app/features/game/domain/game_repository.dart';
 import 'package:chess_app/features/game/domain/game_state.dart';
 import 'package:chess_app/features/game/domain/models.dart';
+import 'package:chess_app/features/stats/data/stats_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockGameRepository extends Mock implements GameRepository {}
 class MockChessEngine extends Mock implements ChessEngine {}
+
+class MockStatsService extends StateNotifier<StatsState> implements StatsService {
+  MockStatsService() : super(StatsState.empty);
+  final List<String> calls = [];
+
+  @override Future<void> load() async {}
+  @override void recordPuzzleSolved({required int hintsUsed}) {}
+  @override void recordGameWin(DifficultyLevel difficulty) => calls.add('win:${difficulty.name}');
+  @override void recordGameLoss(DifficultyLevel difficulty) => calls.add('loss:${difficulty.name}');
+}
 
 void main() {
   setUpAll(() {
@@ -17,16 +28,19 @@ void main() {
 
   late MockGameRepository repo;
   late MockChessEngine engine;
+  late MockStatsService mockStats;
   late ProviderContainer container;
 
   setUp(() {
     repo = MockGameRepository();
     engine = MockChessEngine();
+    mockStats = MockStatsService();
 
     container = ProviderContainer(
       overrides: [
         gameRepositoryProvider.overrideWithValue(repo),
         chessEngineProvider.overrideWithValue(engine),
+        statsProvider.overrideWith((_) => mockStats),
       ],
     );
   });
@@ -235,6 +249,90 @@ void main() {
       container.read(gameNotifierProvider.notifier).undoLastMove();
 
       expect(container.read(gameNotifierProvider)!.canUndo, isFalse);
+    });
+  });
+
+  group('stats recording', () {
+    void setupStart() {
+      when(() => repo.reset()).thenReturn(null);
+      when(() => repo.loadPosition(any())).thenReturn(
+        const GamePositionResult(fen: GameState.kStartFen, legalMoves: ['e2e4']),
+      );
+      container.read(gameNotifierProvider.notifier).startGame(
+        playerColor: Side.white,
+        difficulty: DifficultyLevel.medium,
+      );
+    }
+
+    test('records player win when player delivers checkmate', () async {
+      setupStart();
+      // FEN with 'b' to move = black is to move = white just delivered checkmate = white won
+      when(() => repo.applyMove('e2e4')).thenReturn(
+        const GameMoveResult(
+          fen: 'checkmate_fen b - - 0 1',
+          legalMoves: [],
+          status: GameStatus.checkmate,
+          sanMove: 'e4#',
+        ),
+      );
+
+      await container.read(gameNotifierProvider.notifier).applyPlayerMove('e2e4');
+
+      expect(mockStats.calls, contains('win:medium'));
+    });
+
+    test('records player loss when AI delivers checkmate', () async {
+      setupStart();
+      when(() => repo.applyMove('e2e4')).thenReturn(
+        const GameMoveResult(
+          fen: 'fen_after_e4 b - - 0 1',
+          legalMoves: ['e7e5'],
+          status: GameStatus.playing,
+          sanMove: 'e4',
+        ),
+      );
+      when(() => engine.getBestMove(any(), any())).thenAnswer((_) async => 'e7e5');
+      // FEN with 'w' to move = white is to move = black just delivered checkmate = black won = player lost
+      when(() => repo.applyMove('e7e5')).thenReturn(
+        const GameMoveResult(
+          fen: 'checkmate_fen w - - 0 1',
+          legalMoves: [],
+          status: GameStatus.checkmate,
+          sanMove: 'e5#',
+        ),
+      );
+
+      await container.read(gameNotifierProvider.notifier).applyPlayerMove('e2e4');
+
+      expect(mockStats.calls, contains('loss:medium'));
+    });
+
+    test('records loss on resign', () {
+      setupStart();
+      container.read(gameNotifierProvider.notifier).resign();
+      expect(mockStats.calls, contains('loss:medium'));
+    });
+
+    test('does not record on stalemate', () async {
+      setupStart();
+      when(() => repo.applyMove('e2e4')).thenReturn(
+        const GameMoveResult(
+          fen: 'stalemate_fen b - - 0 1',
+          legalMoves: [],
+          status: GameStatus.stalemate,
+          sanMove: 'e4',
+        ),
+      );
+
+      await container.read(gameNotifierProvider.notifier).applyPlayerMove('e2e4');
+
+      expect(mockStats.calls, isEmpty);
+    });
+
+    test('clearGame does not record any result', () {
+      setupStart();
+      container.read(gameNotifierProvider.notifier).clearGame();
+      expect(mockStats.calls, isEmpty);
     });
   });
 }

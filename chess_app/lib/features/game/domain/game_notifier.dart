@@ -1,3 +1,4 @@
+import 'package:chess_app/features/stats/data/stats_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chess_engine.dart';
@@ -37,7 +38,7 @@ class GameNotifier extends StateNotifier<GameState?> {
       playerColor: playerColor,
       difficulty: difficulty,
       status: GameStatus.playing,
-      fenHistory: [result.fen], // seeds the fenHistory invariant
+      fenHistory: const [], // populated per-round in applyPlayerMove
     );
   }
 
@@ -49,7 +50,7 @@ class GameNotifier extends StateNotifier<GameState?> {
     final playerResult = _repo.applyMove(uciMove);
     final playerMove = Move(uci: uciMove, san: playerResult.sanMove);
 
-    state = current.copyWith(
+    final updatedState = current.copyWith(
       fen: playerResult.fen,
       history: [...current.history, playerMove],
       legalMoves: playerResult.legalMoves,
@@ -57,6 +58,8 @@ class GameNotifier extends StateNotifier<GameState?> {
       fenHistory: [...current.fenHistory, preFen],
       isAiThinking: playerResult.status == GameStatus.playing,
     );
+    state = updatedState;
+    _recordResultIfTerminal(current, updatedState);
 
     if (playerResult.status == GameStatus.playing) {
       await _triggerAiMove(playerResult.fen, current.difficulty);
@@ -69,14 +72,16 @@ class GameNotifier extends StateNotifier<GameState?> {
       final aiUci = await _engine.getBestMove(fen, difficulty);
       final aiResult = _repo.applyMove(aiUci);
       final aiMove = Move(uci: aiUci, san: aiResult.sanMove);
-      state = state?.copyWith(
+      final prevState = state!;
+      final newState = prevState.copyWith(
         fen: aiResult.fen,
-        history: [...(state!.history), aiMove],
+        history: [...prevState.history, aiMove],
         legalMoves: aiResult.legalMoves,
         status: aiResult.status,
-        fenHistory: [...(state!.fenHistory), fen],
         isAiThinking: false,
       );
+      state = newState;
+      _recordResultIfTerminal(prevState, newState);
     } catch (e) {
       debugPrint('AI move failed: $e');
       state = state?.copyWith(isAiThinking: false);
@@ -87,12 +92,13 @@ class GameNotifier extends StateNotifier<GameState?> {
     final current = state;
     if (current == null || current.isAiThinking) return;
     if (current.history.length < 2) return;
-    if (current.fenHistory.length < 2) return;
+    if (current.fenHistory.isEmpty) return;
 
+    // fenHistory stores one pre-player-move FEN per round; pop the last entry.
+    final targetFen = current.fenHistory.last;
     final newHistory = current.history.sublist(0, current.history.length - 2);
     final newFenHistory =
-        current.fenHistory.sublist(0, current.fenHistory.length - 2);
-    final targetFen = newFenHistory.last;
+        current.fenHistory.sublist(0, current.fenHistory.length - 1);
 
     final result = _repo.loadPosition(targetFen);
     state = current.copyWith(
@@ -104,7 +110,7 @@ class GameNotifier extends StateNotifier<GameState?> {
       isAiThinking: false,
     );
 
-    // Player is Black and board is now at start → AI must move first
+    // Player is Black and history is now empty → AI must move first
     if (newHistory.isEmpty && current.playerColor == Side.black) {
       _triggerAiMove(result.fen, current.difficulty);
     }
@@ -113,11 +119,34 @@ class GameNotifier extends StateNotifier<GameState?> {
   void resign() {
     final current = state;
     if (current == null) return;
-    state = current.copyWith(status: GameStatus.draw); // player resigned
+    final resigned = current.copyWith(status: GameStatus.resigned);
+    state = resigned;
+    _recordResultIfTerminal(current, resigned);
   }
 
   void clearGame() {
     state = null;
+  }
+
+  void _recordResultIfTerminal(GameState previous, GameState next) {
+    if (previous.status != GameStatus.playing) return;
+
+    if (next.status == GameStatus.checkmate) {
+      // FEN active color is the LOSER's turn (the move they never get to make).
+      // Opposite color = the one who delivered checkmate = winner.
+      final fenParts = next.fen.split(' ');
+      if (fenParts.length < 2) return;
+      final fenActive = fenParts[1];
+      final winnerColor = fenActive == 'w' ? Side.black : Side.white;
+      if (winnerColor == next.playerColor) {
+        _ref.read(statsProvider.notifier).recordGameWin(next.difficulty);
+      } else {
+        _ref.read(statsProvider.notifier).recordGameLoss(next.difficulty);
+      }
+    } else if (next.status == GameStatus.resigned) {
+      _ref.read(statsProvider.notifier).recordGameLoss(next.difficulty);
+    }
+    // stalemate / draw → no stat recorded
   }
 
   /// Restore a previously saved game state (called from main.dart startup).
