@@ -24,6 +24,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   String? _selectedSquare;
   List<String> _legalMovesFromSelected = [];
   bool _gameOverShown = false;
+  bool _lastMoveWasBot = false;
 
 
   Map<String, String> _parseFen(String fen) {
@@ -217,6 +218,15 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     ref.listen<GameState?>(gameNotifierProvider, (prev, next) {
       if (prev == null || next == null) return;
+
+      // Trigger slide animation for bot move (including checkmate)
+      if (prev.isAiThinking && !next.isAiThinking) {
+        setState(() => _lastMoveWasBot = true);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _lastMoveWasBot = false);
+        });
+      }
+
       final audio = ref.read(audioServiceProvider);
 
       // AI move completed (only when game is still playing to avoid
@@ -372,6 +382,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         : null,
                     onSquareTap: (sq) => _onSquareTap(sq, gameState),
                     hidePieceOnSquare: null,
+                    animateLastMove: _lastMoveWasBot,
                 ),
               ),
 
