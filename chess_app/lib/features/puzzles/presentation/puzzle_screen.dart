@@ -7,6 +7,7 @@ import 'package:chess_app/features/game/presentation/board/board_widget.dart';
 import 'package:chess_app/features/puzzles/data/credits_service.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_notifier.dart';
 import 'package:chess_app/features/settings/data/settings_repository.dart';
+import 'package:chess_app/features/audio/audio_service.dart';
 
 class PuzzleScreen extends ConsumerStatefulWidget {
   final String puzzleId;
@@ -113,6 +114,8 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     final session = ref.read(puzzleNotifierProvider);
     if (session == null) return;
 
+    ref.read(audioServiceProvider).playSuccess();
+
     // 10 credits base − 2 per hint, minimum 0
     final earned = (10 - session.hintCount * 2).clamp(0, 10);
     ref.read(creditsProvider.notifier).add(earned);
@@ -157,6 +160,24 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     final session = ref.watch(puzzleNotifierProvider);
     final settings = ref.watch(settingsProvider);
     final credits = ref.watch(creditsProvider);
+
+    ref.listen<PuzzleSession?>(puzzleNotifierProvider, (prev, next) {
+      if (prev == null || next == null) return;
+      final audio = ref.read(audioServiceProvider);
+
+      // Correct move accepted (FEN changed, not failed, not yet complete —
+      // complete is handled separately in _onPuzzleSolved to avoid double-firing)
+      if (!next.isFailed && !next.isComplete && next.currentFen != prev.currentFen) {
+        audio.playMove();
+        return;
+      }
+
+      // Wrong move
+      if (!prev.isFailed && next.isFailed) {
+        audio.playWrong();
+        return;
+      }
+    });
 
     if (session == null) {
       return Scaffold(
