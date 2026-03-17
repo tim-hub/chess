@@ -63,10 +63,13 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
   }
 
   /// Marks a puzzle as solved in the given chapter and rebuilds state.
+  /// Updates the in-memory set synchronously before persisting so that
+  /// [nextPuzzleId] immediately skips the just-solved puzzle even if called
+  /// before the async persist completes.
   Future<void> markSolved(String chapterId, String puzzleId) async {
-    await _progressRepo.markSolved(chapterId, puzzleId);
     _solvedIds[chapterId] = {...(_solvedIds[chapterId] ?? {}), puzzleId};
     _rebuildState();
+    await _progressRepo.markSolved(chapterId, puzzleId);
   }
 
   /// Returns true if the puzzle has already been solved in this chapter.

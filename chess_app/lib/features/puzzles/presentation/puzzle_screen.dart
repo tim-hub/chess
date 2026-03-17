@@ -35,6 +35,11 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
   List<String> _legalMovesFromSelected = [];
   bool _solvedShown = false;
 
+  // Frozen at solve time so the banner shows correct values even after
+  // _loadNext starts loading the next puzzle and the session changes.
+  int _earnedAtSolve = 0;
+  int _hintCountAtSolve = 0;
+
   @override
   void initState() {
     super.initState();
@@ -116,10 +121,18 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     // addPostFrameCallback (which may be called again before this async
     // method completes its first await).
     if (_solvedShown) return;
-    setState(() { _solvedShown = true; });
 
     final session = ref.read(puzzleNotifierProvider);
     if (session == null) return;
+
+    // Freeze earned/hintCount before any state changes so the banner
+    // always shows the values from the moment of solve.
+    final earned = (10 - session.hintCount).clamp(0, 10);
+    setState(() {
+      _solvedShown = true;
+      _earnedAtSolve = earned;
+      _hintCountAtSolve = session.hintCount;
+    });
 
     ref.read(audioServiceProvider).playSuccess();
 
@@ -131,11 +144,12 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
         ref.read(chapterNotifierProvider.notifier).isSolved(chapterId, puzzleId);
 
     if (!alreadySolved) {
-      final earned = (10 - session.hintCount).clamp(0, 10);
       ref.read(creditsProvider.notifier).add(earned);
     }
 
-    // Update chapter progress (idempotent)
+    // Update chapter progress (idempotent). In-memory _solvedIds in
+    // ChapterNotifier is updated synchronously before the async persist,
+    // so nextPuzzleId() immediately skips this puzzle.
     if (chapterId != null) {
       await ref
           .read(chapterNotifierProvider.notifier)
@@ -148,6 +162,8 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
       _solvedShown = false;
       _selectedSquare = null;
       _legalMovesFromSelected = [];
+      _earnedAtSolve = 0;
+      _hintCountAtSolve = 0;
     });
 
     final chapterId = widget.chapterId;
@@ -226,8 +242,6 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
     final activeColor = session.currentFen.split(' ')[1];
     final flipped = activeColor == 'b';
 
-    final earned = (10 - session.hintCount).clamp(0, 10);
-
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -294,8 +308,8 @@ class _PuzzleScreenState extends ConsumerState<PuzzleScreen> {
           // Bottom area: solved banner OR bottom controls
           if (_solvedShown)
             _SolvedBanner(
-              earned: earned,
-              hintCount: session.hintCount,
+              earned: _earnedAtSolve,
+              hintCount: _hintCountAtSolve,
               onNext: _loadNext,
             )
           else
@@ -428,11 +442,19 @@ class _SolvedBanner extends StatefulWidget {
 }
 
 class _SolvedBannerState extends State<_SolvedBanner> {
+  bool _advanced = false;
+
+  void _advance() {
+    if (_advanced) return;
+    _advanced = true;
+    widget.onNext();
+  }
+
   @override
   void initState() {
     super.initState();
     Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) widget.onNext();
+      if (mounted) _advance();
     });
   }
 
@@ -483,7 +505,7 @@ class _SolvedBannerState extends State<_SolvedBanner> {
           FilledButton(
             style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF166534)),
-            onPressed: widget.onNext,
+            onPressed: _advance,
             child: const Text(
               'Next →',
               style: TextStyle(color: Color(0xFF4ADE80)),
