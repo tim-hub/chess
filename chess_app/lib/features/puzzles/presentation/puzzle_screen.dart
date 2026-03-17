@@ -6,6 +6,7 @@ import 'package:chess_app/features/game/domain/game_notifier.dart';
 import 'package:chess_app/features/game/presentation/board/board_widget.dart';
 import 'package:chess_app/features/puzzles/data/credits_service.dart';
 import 'package:chess_app/features/puzzles/domain/puzzle_notifier.dart';
+import 'package:chess_app/features/puzzles/domain/puzzle_session.dart';
 import 'package:chess_app/features/settings/data/settings_repository.dart';
 import 'package:chess_app/features/audio/audio_service.dart';
 
