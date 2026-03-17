@@ -180,7 +180,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       });
 
       await ref.read(gameNotifierProvider.notifier).applyPlayerMove(uciMove);
-      ref.read(audioServiceProvider).playMove();
+      if (ref.read(gameNotifierProvider)?.status == GameStatus.playing) {
+        ref.read(audioServiceProvider).playMove();
+      }
     }
   }
 
