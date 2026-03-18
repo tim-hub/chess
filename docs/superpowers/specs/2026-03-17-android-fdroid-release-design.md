@@ -19,7 +19,7 @@ Release the Chess3000 Flutter app on the official F-Droid catalog. A GitHub Acti
 ## Section 1: Android App Configuration
 
 ### Package ID
-`info.tradeinsight.software.chess300`
+`info.tradeinsight.software.chess3000`
 Reverse-domain notation of `tradeinsight.software` + app name `chess3000`.
 
 ### Files to change
@@ -28,9 +28,9 @@ Reverse-domain notation of `tradeinsight.software` + app name `chess3000`.
 
 Change both `applicationId` and `namespace`:
 ```groovy
-namespace "info.tradeinsight.software.chess300"
+namespace "info.tradeinsight.software.chess3000"
 // ...
-applicationId "info.tradeinsight.software.chess300"
+applicationId "info.tradeinsight.software.chess3000"
 ```
 
 Add a `signingConfigs.release` block that reads env vars when present, falling back to debug signing otherwise (F-Droid's server has no developer keystore — it re-signs with its own key anyway):
@@ -164,7 +164,7 @@ The app bundles Stockfish (GPL-3.0). The fdroiddata metadata `License` field mus
 
 ### fdroiddata metadata file
 Submitted as a MR to `https://gitlab.com/fdroid/fdroiddata`.
-**File path in fdroiddata:** `metadata/info.tradeinsight.software.chess300.yml`
+**File path in fdroiddata:** `metadata/info.tradeinsight.software.chess3000.yml`
 
 ```yaml
 Categories:
@@ -194,8 +194,8 @@ Note: no `sudo` block — F-Droid's Android build environment already provides t
 
 ### F-Droid submission process (one-time)
 1. Fork `https://gitlab.com/fdroid/fdroiddata`
-2. Add `metadata/info.tradeinsight.software.chess300.yml`
-3. Run `fdroid lint metadata/info.tradeinsight.software.chess300.yml` locally to validate
+2. Add `metadata/info.tradeinsight.software.chess3000.yml`
+3. Run `fdroid lint metadata/info.tradeinsight.software.chess3000.yml` locally to validate
 4. Open MR — review typically takes 2–8 weeks
 5. After merge: every future `v*.*.*` tag is auto-detected and built by F-Droid's infrastructure
 
