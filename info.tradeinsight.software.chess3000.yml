@@ -21,6 +21,6 @@ Builds:
     commit: v1.0.1
     subdir: chess_app
     flutter: stable
-    build: flutter build apk --release --target-platform android-arm64
+    build: flutter build apk --release
     output: build/app/outputs/flutter-apk/app-release.apk
     prebuild: flutter pub get
