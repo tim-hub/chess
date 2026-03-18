@@ -1,4 +1,4 @@
-package info.tradeinsight.software.chess300
+package info.tradeinsight.software.chess3000
 
 import io.flutter.embedding.android.FlutterActivity
 

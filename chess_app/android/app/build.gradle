@@ -23,7 +23,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "info.tradeinsight.software.chess300"
+    namespace "info.tradeinsight.software.chess3000"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
@@ -53,7 +53,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "info.tradeinsight.software.chess300"
+        applicationId "info.tradeinsight.software.chess3000"
         minSdk flutter.minSdkVersion
         targetSdk flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
