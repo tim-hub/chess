@@ -23,7 +23,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.chess.chess_app"
+    namespace "info.tradeinsight.software.chess300"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
@@ -40,8 +40,20 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
+    signingConfigs {
+        release {
+            def envKeystore = System.getenv('KEYSTORE_FILE')
+            if (envKeystore) {
+                storeFile file(envKeystore)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS')
+                keyPassword System.getenv('KEY_PASSWORD')
+            }
+        }
+    }
+
     defaultConfig {
-        applicationId "com.chess.chess_app"
+        applicationId "info.tradeinsight.software.chess300"
         minSdk flutter.minSdkVersion
         targetSdk flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
@@ -50,7 +62,8 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            def envKeystore = System.getenv('KEYSTORE_FILE')
+            signingConfig envKeystore ? signingConfigs.release : signingConfigs.debug
         }
     }
 }
