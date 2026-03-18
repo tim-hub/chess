@@ -38,8 +38,8 @@ void main() {
   test('chapter 2 is locked when chapter 1 has 0 stars', () async {
     when(() => puzzleRepo.getPuzzleIdsByThemeTags(['mateIn1', 'mateInOne'], limit: any(named: 'limit')))
         .thenAnswer((_) async => ['p1', 'p2', 'p3', 'p4', 'p5']);
-    // 0 solved → 0 stars → chapter 2 locked
-    final notifier = ChapterNotifier(puzzleRepo, progressRepo);
+    // 0 solved → 0 stars → chapter 2 locked (debugUnlockAll: false simulates release mode)
+    final notifier = ChapterNotifier(puzzleRepo, progressRepo, debugUnlockAll: false);
     await notifier.load();
     expect(notifier.state[1].isUnlocked, isFalse);
   });

@@ -24,18 +24,22 @@ final chapterNotifierProvider =
 class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
   final PuzzleRepository _puzzleRepo;
   final ChapterProgressRepository _progressRepo;
+  final bool _debugUnlockAll;
 
   // In-memory solved sets for synchronous isSolved() lookups.
   final Map<String, Set<String>> _solvedIds = {};
 
-  ChapterNotifier(this._puzzleRepo, this._progressRepo) : super([]);
+  ChapterNotifier(this._puzzleRepo, this._progressRepo,
+      {bool? debugUnlockAll})
+      : _debugUnlockAll = debugUnlockAll ?? kDebugMode,
+        super([]);
 
   /// Loads all 9 chapters from the registry and persisted progress.
   /// Call once on app start or when navigating to the chapter list.
   Future<void> load() async {
     final chapters = <PuzzleChapter>[];
     int prevStarCount = 0;
-    final limit = kDebugMode ? 2 : 50;
+    final limit = _debugUnlockAll ? 2 : 50;
 
     for (int i = 0; i < kChapterDefinitions.length; i++) {
       final def = kChapterDefinitions[i];
@@ -47,7 +51,7 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
       _solvedIds[def.id] = solvedSet;
 
       final solvedCount = solvedSet.intersection(puzzleIds.toSet()).length;
-      final isUnlocked = kDebugMode
+      final isUnlocked = _debugUnlockAll
           ? true
           : i == 0 || prevStarCount >= kMinStarsToUnlock;
 
@@ -103,7 +107,7 @@ class ChapterNotifier extends StateNotifier<List<PuzzleChapter>> {
       final ch = entry.value;
       final solvedSet = _solvedIds[ch.id] ?? {};
       final solvedCount = solvedSet.intersection(ch.puzzleIds.toSet()).length;
-      final isUnlocked = kDebugMode
+      final isUnlocked = _debugUnlockAll
           ? true
           : i == 0 || prevStarCount >= kMinStarsToUnlock;
       final updated = PuzzleChapter(
