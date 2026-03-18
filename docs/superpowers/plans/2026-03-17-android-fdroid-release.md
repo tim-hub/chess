@@ -27,12 +27,12 @@ In `chess_app/android/app/build.gradle`, make these two changes:
 
 ```groovy
 // Line 29 — change namespace
-namespace "software.tradeinsight.chess3000"
+namespace "info.tradeinsight.software.chess300"
 ```
 
 ```groovy
 // Inside defaultConfig — change applicationId
-applicationId "software.tradeinsight.chess3000"
+applicationId "info.tradeinsight.software.chess300"
 ```
 
 - [ ] **Step 2: Add `signingConfigs.release` block and update `buildTypes.release`**
@@ -79,7 +79,7 @@ Expected: `✓ Built build/app/outputs/flutter-apk/app-debug.apk` — confirms G
 
 ```bash
 git add chess_app/android/app/build.gradle
-git commit -m "chore(android): set app ID to software.tradeinsight.chess3000 and add env-var signing config"
+git commit -m "chore(android): set app ID to info.tradeinsight.software.chess300 and add env-var signing config"
 ```
 
 ---
@@ -392,7 +392,7 @@ pip install fdroidserver
 
 - [ ] **Step 2: Create the metadata file locally**
 
-Create a temporary file `software.tradeinsight.chess3000.yml` (anywhere on your machine):
+Create a temporary file `info.tradeinsight.software.chess300.yml` (anywhere on your machine):
 
 ```yaml
 Categories:
@@ -425,9 +425,9 @@ The `fdroid lint` command must be run from inside a cloned fdroiddata repo, not 
 
 ```bash
 # Clone your fork of fdroiddata and copy the file in first
-cp software.tradeinsight.chess3000.yml metadata/
+cp info.tradeinsight.software.chess300.yml metadata/
 # Then lint using the app ID (no .yml extension, no path prefix)
-fdroid lint software.tradeinsight.chess3000
+fdroid lint info.tradeinsight.software.chess300
 ```
 
 Expected: no errors.
@@ -439,10 +439,10 @@ Expected: no errors.
 git clone git@gitlab.com:<your-username>/fdroiddata.git
 cd fdroiddata
 # Copy the metadata file (already created in Step 2, linted in Step 3)
-cp /path/to/software.tradeinsight.chess3000.yml metadata/
+cp /path/to/info.tradeinsight.software.chess300.yml metadata/
 git checkout -b add-chess3000
-git add metadata/software.tradeinsight.chess3000.yml
-git commit -m "New app: Chess3000 (software.tradeinsight.chess3000)"
+git add metadata/info.tradeinsight.software.chess300.yml
+git commit -m "New app: Chess3000 (info.tradeinsight.software.chess300)"
 git push origin add-chess3000
 # Open MR at https://gitlab.com/fdroid/fdroiddata
 ```
@@ -451,7 +451,7 @@ Review timeline: 2–8 weeks. The F-Droid team may request changes to the metada
 
 - [ ] **Step 5: After MR is merged — verify automatic updates work**
 
-Push a new tag (e.g., `v1.0.1`) and verify that F-Droid's build bot creates a new build entry automatically. Check `https://f-droid.org/packages/software.tradeinsight.chess3000/` for the new version.
+Push a new tag (e.g., `v1.0.1`) and verify that F-Droid's build bot creates a new build entry automatically. Check `https://f-droid.org/packages/info.tradeinsight.software.chess300/` for the new version.
 
 ---
 
@@ -467,7 +467,7 @@ Push a new tag (e.g., `v1.0.1`) and verify that F-Droid's build bot creates a ne
 | `chess_app/fastlane/metadata/android/en-US/short_description.txt` | Create |
 | `chess_app/fastlane/metadata/android/en-US/full_description.txt` | Create |
 | `chess_app/fastlane/metadata/android/en-US/phoneScreenshots/` | Create — add 2+ screenshots |
-| `software.tradeinsight.chess3000.yml` | Create locally → submit to fdroiddata (external repo) |
+| `info.tradeinsight.software.chess300.yml` | Create locally → submit to fdroiddata (external repo) |
 
 ## Manual steps (cannot be automated)
 

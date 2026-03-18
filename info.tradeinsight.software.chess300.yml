@@ -1,0 +1,20 @@
+Categories:
+  - Games
+License: GPL-3.0-only
+SourceCode: https://github.com/tim-hub/chess
+IssueTracker: https://github.com/tim-hub/chess/issues
+
+AutoName: Chess3000
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+CurrentVersion: 1.0.0
+CurrentVersionCode: 10000
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 10000
+    commit: v1.0.0
+    subdir: chess_app
+    flutter: stable
+    output: build/app/outputs/flutter-apk/app-release.apk
+    prebuild: flutter pub get
