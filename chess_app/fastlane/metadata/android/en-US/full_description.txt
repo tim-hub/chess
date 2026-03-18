@@ -1,0 +1,12 @@
+Chess3000 is a fully offline chess app — no account, no internet required.
+
+Features:
+• Play against a built-in Stockfish AI at multiple difficulty levels
+• Solve 450 tactical puzzles across 9 themed chapters (Checkmate in 1, Forks, Pins, Skewers, and more)
+• Earn stars and unlock chapters as you improve
+• Pawn promotion, castling, and all standard rules fully supported
+• Two piece sets: CBurnett and Merida
+• Move sound effects and background music
+
+All puzzles sourced from the Lichess open puzzle database (CC BY 4.0).
+Stockfish engine is GPL-3.0. Source code: https://github.com/tim-hub/chess

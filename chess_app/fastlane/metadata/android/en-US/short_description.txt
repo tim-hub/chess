@@ -1,0 +1,1 @@
+Offline chess with AI opponent and tactical puzzles
