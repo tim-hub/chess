@@ -3,6 +3,7 @@ Categories:
 License: GPL-3.0-only
 SourceCode: https://github.com/tim-hub/chess
 IssueTracker: https://github.com/tim-hub/chess/issues
+RepoType: git
 Repo: https://github.com/tim-hub/chess
 
 AutoName: Chess3000
@@ -19,7 +20,6 @@ Builds:
     versionCode: 10001
     commit: v1.0.1
     subdir: chess_app
-    flutter: stable
     build: flutter build apk --release --target-platform android-arm64
     output: build/app/outputs/flutter-apk/app-release.apk
     prebuild: flutter pub get
