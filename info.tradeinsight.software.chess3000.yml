@@ -7,17 +7,13 @@ RepoType: git
 Repo: https://github.com/tim-hub/chess
 
 AutoName: Chess3000
-AutoUpdateMode: Version
-UpdateCheckMode: Tags
-UpdateCheckData: chess_app/pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 1.0.3
-CurrentVersionCode: 10003
 
 Builds:
   - versionName: 1.0.2
     versionCode: 10002
     commit: v1.0.2
     subdir: chess_app
+    flutter: stable
     output: build/app/outputs/flutter-apk/app-release.apk
     srclibs:
       - flutter@3.41.4
@@ -53,3 +49,9 @@ Builds:
     build:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter build apk --release --target-platform android-arm64
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags
+UpdateCheckData: chess_app/pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
+CurrentVersion: 1.0.3
+CurrentVersionCode: 10003
