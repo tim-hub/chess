@@ -9,25 +9,27 @@ Repo: https://github.com/tim-hub/chess
 AutoName: Chess3000
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
+UpdateCheckData: pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
 CurrentVersion: 1.0.2
 CurrentVersionCode: 10002
 
 Builds:
-  - versionName: 1.0.0
-    versionCode: 10000
-    commit: v1.0.0
-  - versionName: 1.0.1
-    versionCode: 10001
-    commit: v1.0.1
   - versionName: 1.0.2
     versionCode: 10002
     commit: v1.0.2
     subdir: chess_app
-    flutter: stable
-    build: flutter build apk --release
     output: build/app/outputs/flutter-apk/app-release.apk
+    srclibs:
+      - flutter@3.41.4
+    rm:
+      - chess_app/ios
+      - chess_app/macos
     prebuild:
-      - flutterVersion=$(sed -n -E "s/.*flutter-version:\ '(.*)'/\1/p" .github/workflows/release.yml)
-      - '[[ $flutterVersion ]]'
-      - git -C $flutter$ checkout -f $flutterVersion
-      - flutter pub get
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    scandelete:
+      - chess_app/.pub-cache
+    build:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter build apk --release --target-platform android-arm64
