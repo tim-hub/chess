@@ -66,6 +66,11 @@ android {
             signingConfig envKeystore ? signingConfigs.release : signingConfigs.debug
         }
     }
+
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
 }
 
 flutter {
