@@ -1,7 +1,7 @@
 name: chess_app
 description: Offline chess app with AI and puzzles.
 publish_to: 'none'
-version: 1.0.2+10002
+version: 1.0.3+10003
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
