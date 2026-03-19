@@ -49,9 +49,29 @@ Builds:
     build:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter build apk --release --target-platform android-arm64
+  - versionName: 1.0.4
+    versionCode: 10004
+    commit: v1.0.4
+    subdir: chess_app
+    flutter: stable
+    output: build/app/outputs/flutter-apk/app-release.apk
+    srclibs:
+      - flutter@3.41.4
+    rm:
+      - chess_app/ios
+      - chess_app/macos
+    prebuild:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter config --no-analytics
+      - $$flutter$$/bin/flutter pub get
+    scandelete:
+      - chess_app/.pub-cache
+    build:
+      - export PUB_CACHE=$(pwd)/.pub-cache
+      - $$flutter$$/bin/flutter build apk --release --target-platform android-arm64
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags
 UpdateCheckData: chess_app/pubspec.yaml|version:\s.+\+(\d+)|.|version:\s(.+)\+
-CurrentVersion: 1.0.3
-CurrentVersionCode: 10003
+CurrentVersion: 1.0.4
+CurrentVersionCode: 10004
