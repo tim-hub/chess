@@ -7,3 +7,5 @@ chess_app/build/
 .DS_Store
 *.jks
 *.keystore
+.claude/state/
+.claude/sessions/
