@@ -8,6 +8,7 @@ AutoName: Chess3000
 
 RepoType: git
 Repo: https://github.com/tim-hub/chess
+Binaries: https://github.com/tim-hub/chess/releases/download/v%v/app-release.apk
 
 Builds:
   - versionName: 1.0.5
@@ -33,7 +34,6 @@ Builds:
       - export PUB_CACHE=$(pwd)/.pub-cache
       - $$flutter$$/bin/flutter build apk --release
 
-Binaries: https://github.com/tim-hub/chess/releases/download/v%v/app-release.apk
 AllowedAPKSigningKeys: c5117a80680a7d3e630fda409b8a61968bf3e2bb00fcf1f82c77bfa90b0e2227
 
 AutoUpdateMode: Version
