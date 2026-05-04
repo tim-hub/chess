@@ -12,7 +12,7 @@ Repo: https://github.com/tim-hub/chess
 Builds:
   - versionName: 1.0.5
     versionCode: 10005
-    commit: TBD
+    commit: f21f95d559f4edaa7b29e4e8fc8b07cae9d8f36c
     subdir: chess_app
     output: build/app/outputs/flutter-apk/app-release.apk
     srclibs:
